@@ -1,0 +1,49 @@
+@startuml
+
+!theme plain
+
+actor Utilisateur
+actor Administrateur
+actor "Système" as System
+actor "Intelligence Artificielle" as AI
+
+usecase "S'inscrire" as SignUp
+usecase "S'abonner" as Subscribe
+usecase "S'authentifier" as SignIn
+usecase "Consulter Films" as ViewFilms
+usecase "Commenter un Film" as CommentMovie
+usecase "Noter un Film" as RateMovie
+usecase "Ajouter au Panier" as AddToCart
+usecase "Payer" as Pay
+usecase "Voir Historique d'Achats" as ViewPurchaseHistory
+usecase "Gérer Films" as ManageMovies
+usecase "Générer Statistiques" as GenerateStatistics
+usecase "Classifier Commentaires" as ClassifyComments
+usecase "Regrouper Utilisateurs" as GroupUsers
+usecase "Actualiser Vitrines Utilisateurs" as UpdateUserShowcases
+
+Utilisateur --> SignUp
+Utilisateur --> SignIn
+Utilisateur --> ViewFilms
+Utilisateur --> CommentMovie
+Utilisateur --> RateMovie
+Utilisateur --> AddToCart
+Utilisateur --> Pay
+Utilisateur --> Subscribe
+Utilisateur --> ViewPurchaseHistory
+
+Administrateur --> ManageMovies
+Administrateur --> GenerateStatistics
+Administrateur --> ClassifyComments
+
+AI --> ClassifyComments
+AI --> GroupUsers
+AI --> UpdateUserShowcases
+
+System --> Pay
+
+SignIn .> ViewFilms : << include >>
+CommentMovie .> ClassifyComments : << include >>
+Subscribe .> Pay : << include >>
+
+@enduml

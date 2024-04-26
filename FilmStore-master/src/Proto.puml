@@ -1,0 +1,58 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #EEF2F7
+skinparam class {
+    BackgroundColor #FEFECE
+    ArrowColor SeaGreen
+    BorderColor SpringGreen
+}
+
+class Film {
+    -id: String
+    -titre: String
+    -genre: String
+    -annee: int
+    -duree: int
+    -lienVisionnage: String
+    -producteurs: String[]
+    -acteursPrincipaux: String[]
+    +getDetails(): String
+    +getStatistics(): String[]
+}
+
+class Utilisateur {
+    -email: String
+    -motDePasse: String
+    -nom: String
+    -prenom: String
+    -dateNaissance: Date
+    -adresse: String
+    +commenterFilm(film: Film, commentaire: String, note: int): void
+    +rechercherFilms(criteres: String[]): Film[]
+    +visualiserFilms(): Film[]
+    +ajouterAuPanier(film: Film): void
+    +acheterFilms(): void
+    +sabonner(): void
+}
+
+
+class Administrateur extends Utilisateur {
+    +ajouterFilm(film: Film): void
+    +modifierFilm(film: Film): void
+    +supprimerFilm(film: Film): void
+    +activerDesactiverCommentaires(film: Film, etat: boolean): void
+    +genererStatistiques(): void
+}
+
+class IntelligenceArtificielle {
+    +classifierCommentaires(commentaires: String[]): Map<String, Sentiment>
+    +regrouperUtilisateurs(utilisateurs: Utilisateur[]): Map<String, Preferences>
+}
+
+
+Film "1" -left- "*" Utilisateur : "commenté par"
+Utilisateur "1" -down- "1..*" Film : "acheter (avec commentaire) >"
+IntelligenceArtificielle -up- "*" Film : "analyse >"
+IntelligenceArtificielle -left- "*" Utilisateur : "segmente >"
+
+@enduml

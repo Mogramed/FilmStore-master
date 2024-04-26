@@ -1,0 +1,59 @@
+Use Case Description
+
+Acteurs:
+
+Utilisateur (client du site): Peut créer un compte, s'authentifier, commenter et noter des films, gérer un panier, effectuer des achats, s'abonner ou se désabonner, et consulter l'historique de ses achats.
+
+Administrateur: Gère les films (ajout, modification, suppression), active/désactive les commentaires, génère des statistiques.
+
+Intelligence Artificielle (IA): Deux IAs pour la classification des commentaires et la segmentation des utilisateurs selon leurs tendances d'achat.
+
+Fonctionnalités Principales:
+
+Gestion de compte utilisateur (création, authentification, mise à jour de profil).
+
+Navigation et consultation de films (vitrine personnalisée, recherche, visualisation de résumés pour abonnés).
+
+Gestion des commentaires (ajout, suppression, modification, filtration par récence et par type).
+
+Évaluation des films (notation, consultation des moyennes).
+
+Gestion du panier et achat (ajout/suppression de films du panier, paiement, consultation de l'historique d'achats avec filtres).
+
+Abonnement (abonnement/désabonnement, bénéfices d'abonnement).
+
+Administration du site (gestion des films, gestion des commentaires, génération de statistiques).
+
+Fonctionnalités IA (classification des commentaires, personnalisation de la vitrine utilisateur).
+
+
+
+Acteurs : Utilisateur, Administrateur, Système d'IA pour la classification des commentaires, Système d'IA pour la recommandation de films.
+
+
+Cas d'utilisation pour l'Utilisateur :
+
+S'inscrire / Se connecter.
+Parcourir les films.
+Ajouter / Supprimer des films du panier.
+Acheter des films.
+Commenter un film.
+Noter un film.
+Filtrer les commentaires (plus récents, positifs, négatifs).
+Supprimer / Modifier ses commentaires.
+Consulter / Filtrer l'historique des achats.
+S'abonner / Se désabonner.
+
+
+Cas d'utilisation pour l'Administrateur :
+
+Gérer les films (ajouter, modifier, supprimer).
+Activer / Désactiver les commentaires sur les films.
+Générer des statistiques sur les ventes, films et utilisateurs.
+
+
+
+Cas d'utilisation pour les Systèmes d'IA :
+
+Classer les commentaires en positifs ou négatifs.
+Recommander des films basés sur les tendances d'achat.

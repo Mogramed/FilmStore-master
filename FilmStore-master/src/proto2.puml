@@ -1,0 +1,130 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #EEF2F7
+skinparam class {
+    BackgroundColor #FEFECE
+    ArrowColor SeaGreen
+    BorderColor SpringGreen
+}
+
+class PlateformeVenteFilms {
+    -nomPlateforme: String
+}
+
+class Film {
+    -id: String
+    -genre: String
+    -annee: int
+    -titre: String
+    -description: String
+    -producteurs: String[]
+    -acteursPrincipaux: String[]
+    +getDetails(): String
+}
+
+class Utilisateur {
+    -email: String
+    -motDePasse: String
+    -informationsPersonnelles: InformationsPersonnelles
+    -preferences: Preferences
+    -transactions: Transactions
+    +recommanderFilms(): Film[]
+    +ajouterCommentaire(film: Film, commentaire: Commentaire): void
+    +supprimerCommentaire(commentaire: Commentaire): void
+    +modifierCommentaire(commentaire: Commentaire): void
+    +ajouterAuPanier(film: Film): void
+    +supprimerDuPanier(film: Film): void
+    +acheterFilms(): void
+    +s'abonner(): void
+}
+
+class Abonnement {
+    -typeAbonnement: String
+    -dateDebut: Date
+    -dateFin: Date
+    -reduction: Double
+}
+
+class Reduction {
+    -pourcentage: Double
+}
+
+class InformationsPersonnelles {
+    -firstName: String
+    -lastName: String
+    -dateNaissance: Date
+    -adresse: String
+    -phraseSecrete: String
+}
+
+class Preferences {
+    -genresFavoris: String[]
+    -acteursFavoris: String[]
+}
+
+class Transactions {
+    -panier: Film[]
+    -historiqueAchats: Achat[]
+    -commentaires: Commentaire[]
+}
+
+class Achat {
+    -film: Film
+    -date: Date
+}
+
+class Commentaire {
+    -utilisateur: Utilisateur
+    -film: Film
+    -note: int
+    -date: Date
+    -sentiment: String
+    -texte: String
+}
+
+class Administrateur extends Utilisateur {
+    +ajouterFilm(film: Film): void
+    +modifierFilm(film: Film): void
+    +supprimerFilm(film: Film): void
+    +activerCommentaires(commentaire: Commentaire): void
+    +desactiverCommentaires(commentaire: Commentaire): void
+    +genererStatistiques(): Statistiques
+}
+
+
+
+class Statistiques {
+    -ventesParFilm: Map<Film, int>
+    -commentairesParFilm: Map<Film, List<Commentaire>>
+}
+
+class IntelligenceArtificielle {
+    +analyserCommentaires(): Map<Film, Sentiment>
+    +regrouperUtilisateurs(): List<GroupeUtilisateurs>
+}
+
+class GroupeUtilisateurs {
+    -utilisateurs: Utilisateur[]
+}
+
+PlateformeVenteFilms "1..*" -- "0..*" Film : contenir
+PlateformeVenteFilms "1..*" -- "0..*" Utilisateur : Se connecter
+Utilisateur "1..*" -- "1..*" InformationsPersonnelles : posséder
+Utilisateur "1..*" -- "1..*" Preferences : posséder
+Utilisateur "1..*" -- "1..*" Transactions : effectuer
+Transactions "1..*" -- "1..*" Achat : inclure
+Film "0..*" -- "0..*" Utilisateur : recommandé par
+Commentaire "1.*" -- "1" Utilisateur : posté par
+Commentaire "1.*" -- "1" Film : concerne
+IntelligenceArtificielle -- "*" Film : analyse >
+IntelligenceArtificielle -- "*" Commentaire : gerer >
+IntelligenceArtificielle -- "*" Utilisateur : gerer >
+GroupeUtilisateurs -- "*" Utilisateur : former
+GroupeUtilisateurs -- "*" Statistiques : représenter
+Administrateur -- "*" IntelligenceArtificielle : utiliser
+Administrateur -- "*" Statistiques : utiliser
+Utilisateur "0..*" -- "0..*" Abonnement : souscrit
+Abonnement "1..*" -- "1..*" Reduction : offre
+Reduction "0..*" -- "0..*" Film : appliquéeSur
+
+@enduml

@@ -1,0 +1,86 @@
+<PlateformeVenteFilms nomPlateforme="Netflix">
+    <Films>
+        <Film id="F123" genre="Science-Fiction" annee="2021">
+            <Titre>Les Gardiens de la Galaxie 3</Titre>
+            <Description>Les Gardiens luttent pour garder leur nouvelle famille unie tout en affrontant des défis cosmiques.</Description>
+            <Equipe>
+                <Producteurs>
+                    <Producteur nom="Kevin Feige"/>
+                </Producteurs>
+                <Acteurs>
+                    <Acteur nom="Chris Pratt" role="Peter Quill / Star-Lord"/>
+                    <Acteur nom="Zoe Saldana" role="Gamora"/>
+                </Acteurs>
+            </Equipe>
+            <Evaluation>
+                <NoteMoyenne>8.2</NoteMoyenne>
+                <Commentaires>
+                    <Commentaire utilisateur="user@example.com" date="2024-03-10" note="9" sentiment="positif">Hilarant et touchant, un véritable voyage spatial.</Commentaire>
+                </Commentaires>
+            </Evaluation>
+        </Film>
+    </Films>
+    <Utilisateurs>
+        <Client email="user@gmail.com" abonnement="actif">
+            <InformationsPersonnelles>
+                <FirstName>Mohamed Amine</FirstName>
+                <LastName> Khaldi </LastName>
+                <DateNaissance>2002-08-29</DateNaissance>
+                <Adresse>123 rue de Paris, 75001 Paris, France</Adresse>
+                <PhraseSecrete>Mon premier animal de compagnie</PhraseSecrete>
+            </InformationsPersonnelles>
+            <Preferences>
+                <FilmRecommande id="F123" raison="Nouveauté"/>
+                <FilmRecommande id="F456" raison="Basé sur vos goûts"/>
+            </Preferences>
+            <Transactions>
+                <Panier>
+                    <Film id="F123"/>
+                </Panier>
+                <HistoriqueAchats>
+                    <Achat id="F789" date="2023-12-25"/>
+                </HistoriqueAchats>
+                <Commentaires>
+                    <Commentaire id="F789" note="7" sentiment="positif">Bon film pour les fêtes.</Commentaire>
+                </Commentaires>
+            </Transactions>
+        </Client>
+        <Admin email="admin@gmail.com">
+            <Nom>ADMIN SUPREME</Nom>
+            <GestionFilms>
+                <Action type="ajout" id="F456" date="2024-03-01"/>
+                <Action type="modification" id="F789" date="2024-03-02"/>
+                <Action type="masquer/afficher les commentaires" id="F103"/>
+                <Statistiques>
+                        <Ventes>
+                            <TotalVentesAnnee annee="2023">10000</TotalVentesAnnee>
+                            <VenteMoyenneParFilm>150</VenteMoyenneParFilm>
+                        </Ventes>
+                        <Films>
+                            <FilmPlusVendu code="F123">Titre du Film Plus Vendu</FilmPlusVendu>
+                            <FilmMoinsVendu code="F456">Titre du Film Moins Vendu</FilmMoinsVendu>
+                        </Films>
+                        <Utilisateurs>
+                            <UtilisateurPlusActif email="email@utilisateur.com">Nom Utilisateur Plus Actif</UtilisateurPlusActif>
+                            <NombreMoyenFilmsParUtilisateur>5</NombreMoyenFilmsParUtilisateur>
+                        </Utilisateurs>
+                </Statistiques>
+            </GestionFilms>
+        </Admin>
+    </Utilisateurs>
+    <IntelligenceArtificielle>
+        <ClassificationCommentaires methode="Bayes">
+            <Commentaire utilisateur="user@gmail.com" id="F123" type="positif"/>
+            <Commentaire utilisateur="user2@gmail.com" id="F456" type="negatif"/>
+        </ClassificationCommentaires>
+        <RegroupementUtilisateurs methode="DistanceEuclidienne">
+            <Groupe id="1">
+                <Membre email="user@example.com"/>
+                <Membre email="friend@example.com"/>
+            </Groupe>
+            <Groupe id="2">
+                <Membre email="anotheruser@example.com"/>
+            </Groupe>
+        </RegroupementUtilisateurs>
+    </IntelligenceArtificielle>
+</PlateformeVenteFilms>
