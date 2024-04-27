@@ -85,11 +85,16 @@ public class LoginWindow extends JFrame {
 
         // Set action on login button click
         loginButton.addActionListener(e -> {
+            String email = emailField.getText();
+            String password = new String(passwordField.getPassword());
             String secretOrToken = secretOrTokenField.getText();
-            boolean authenticated = UserManager.authenticate(emailField.getText(), new String(passwordField.getPassword()), secretOrToken, isAdmin);
-            boolean validToken = !isAdmin || secretOrToken.equals(ADMIN_TOKEN);
+            User loggedInUser = UserManager.authenticate(email, password, secretOrToken, isAdmin);
 
-            if (authenticated && validToken) {
+            boolean validToken = isAdmin && ADMIN_TOKEN.equals(secretOrToken);
+            boolean validUser = loggedInUser != null && (isAdmin ? validToken : true);
+
+            if (validUser) {
+                SessionContext.setCurrentUser(loggedInUser);  // Store the logged-in user in session context.
                 JOptionPane.showMessageDialog(loginDialog, "Login Successful");
                 loginDialog.dispose();
 
@@ -99,7 +104,6 @@ public class LoginWindow extends JFrame {
                 } else {
                     SwingUtilities.invokeLater(() -> new FilmDisplay(filmManager));
                 }
-
             } else {
                 JOptionPane.showMessageDialog(loginDialog, "Login Failed. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -109,8 +113,6 @@ public class LoginWindow extends JFrame {
         loginDialog.setLocationRelativeTo(this);
         loginDialog.setVisible(true);
     }
-
-
 
 
     private void showSignUpDialog() {
@@ -139,7 +141,7 @@ public class LoginWindow extends JFrame {
         // Configure layout for fields
         // Email, First Name, Last Name, Password are common to both admin and user
         int gridY = 0;
-        for (JComponent[] pair : new JComponent[][] {
+        for (JComponent[] pair : new JComponent[][]{
                 {new JLabel("Email:"), emailField},
                 {new JLabel("First Name:"), firstNameField},
                 {new JLabel("Last Name:"), lastNameField},
@@ -200,7 +202,7 @@ public class LoginWindow extends JFrame {
             }
             boolean success = false;
             if (isAdmin) {
-                Admin admin = new Admin(null,firstNameField.getText(), lastNameField.getText(), emailField.getText(), new String(passwordField.getPassword()), token, true);
+                Admin admin = new Admin(null, firstNameField.getText(), lastNameField.getText(), emailField.getText(), new String(passwordField.getPassword()), token, true);
                 success = UserManager.addAdmin(admin);
             } else {
                 int phoneNumber = Integer.parseInt(phoneField.getText());
@@ -224,12 +226,5 @@ public class LoginWindow extends JFrame {
         signUpDialog.pack();
         signUpDialog.setLocationRelativeTo(this);
         signUpDialog.setVisible(true);
-    }
-
-
-
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LoginWindow(filmManager));
     }
 }

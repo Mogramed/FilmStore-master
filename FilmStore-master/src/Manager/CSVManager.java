@@ -26,17 +26,34 @@ public class CSVManager {
             System.err.println("Error reading the file to generate ID: " + filePath);
             e.printStackTrace();
         }
-        return "USR" + (lineCount + 1);  // Prefix 'USR' with the next line number
+
+        // Déterminer le préfixe en fonction du fichier
+        String prefix = filePath.contains("admins") ? "ADM" : "USR";
+        return prefix + (lineCount + 1);  // Générer l'ID avec le préfixe approprié
     }
 
 
+
     public static String getUserNameFromUserId(String userId) {
-        File userFile = new File("./FilmStore-master/src/CSVBase/users.csv");
+        // Tentez d'abord de trouver l'utilisateur dans la base des utilisateurs normaux
+        String userName = findUserNameInFile(userId, "./FilmStore-master/src/CSVBase/users.csv");
+        if (!"Unknown User".equals(userName)) {
+            return userName;
+        }
+
+        // Si non trouvé, tentez de le trouver dans la base des administrateurs
+        return findUserNameInFile(userId, "./FilmStore-master/src/CSVBase/admins.csv");
+
+    }
+
+    private static String findUserNameInFile(String userId, String filePath) {
+        File userFile = new File(filePath);
         try (Scanner scanner = new Scanner(userFile)) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] userDetails = line.split(";");
                 if (userDetails[0].trim().equals(userId.trim())) {
+                    System.out.println(userDetails[1] + " " + userDetails[2]);
                     return userDetails[1] + " " + userDetails[2]; // firstname and lastname
                 }
             }
@@ -47,30 +64,80 @@ public class CSVManager {
     }
 
 
-    public static boolean addCommentToFilm(String filmCode, String comment, String rating, String userid) {
+    public static boolean removeComment(String filmCode, String userCode, String commentText) {
         File file = new File(FILM_CSV_FILE_PATH);
         List<String> lines = new ArrayList<>();
-        boolean updated = false;
-        String userName = getUserNameFromUserId(userid);// Récupérer le nom de l'utilisateur
-        System.out.println(userName);
+        boolean found = false;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith(filmCode + ";")) {
                     String[] parts = line.split(";", -1);
+                    if (parts.length > 12) { // Ensuring there is a comment part
+                        String comments = parts[12];
+                        List<String> updatedComments = Arrays.stream(comments.split("\\|"))
+                                .filter(c -> !c.startsWith(userCode + "," + commentText))
+                                .collect(Collectors.toList());
+                        parts[12] = String.join("|", updatedComments);
+                        line = String.join(";", parts);
+                        found = true;
+                    }
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
 
-                    // Construire le commentaire avec le nom d'utilisateur
+        if (found) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+                for (String modifiedLine : lines) {
+                    writer.println(modifiedLine);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return found;
+    }
+
+
+
+    public static boolean addCommentToFilm(String filmCode, String comment, String rating, String userId) {
+        File file = new File(FILM_CSV_FILE_PATH);
+        List<String> lines = new ArrayList<>();
+        boolean updated = false;
+        String userName = getUserNameFromUserId(userId); // Récupérer le nom de l'utilisateur
+        System.out.println("Adding comment as: " + userName);
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(filmCode + ";")) {
+                    String[] parts = line.split(";", -1); // Utiliser -1 pour inclure les colonnes vides
                     String newComment = comment + "," + rating + "," + userName;
 
-                    // Gérer l'ajout ou la mise à jour des commentaires
-                    if (parts.length <= 12 || parts[12].isEmpty()) {
-                        line += ";" + newComment;
+                    // Ajouter ou mettre à jour le commentaire existant
+                    if (parts.length > 12) {
+                        if (parts[12].isEmpty() || parts[12].equals("\"\"")) {
+                            parts[12] = newComment;  // Directement ajouter le nouveau commentaire si vide ou juste des guillemets
+                        } else {
+                            // Supprimer les guillemets avant d'ajouter un nouveau commentaire si nécessaire
+                            if (parts[12].startsWith("\"\"|")) {
+                                parts[12] = parts[12].substring(3) + "|" + newComment;  // Supprime les guillemets vides et ajoute le nouveau commentaire
+                            } else {
+                                parts[12] += "|" + newComment;
+                            }
+                        }
                     } else {
-                        String existingComments = parts[12];
-                        parts[12] = existingComments.isEmpty() ? newComment : existingComments + "|" + newComment;
-                        line = String.join(";", parts);
+                        // Assurer que le tableau a suffisamment de places pour inclure une colonne de commentaire
+                        parts = Arrays.copyOf(parts, 13); // Étendre le tableau pour inclure la colonne de commentaire
+                        parts[12] = newComment;
                     }
+                    line = String.join(";", parts);
                     updated = true;
                 }
                 lines.add(line);
@@ -95,6 +162,8 @@ public class CSVManager {
 
         return updated;
     }
+
+
 
 
     public static String generateNextFilmId() {

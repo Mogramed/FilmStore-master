@@ -76,7 +76,8 @@ public class FilmDetailsForm {
         commentsPanel.removeAll();
         if (comments != null) {
             for (Comment comment : comments) {
-                String displayText = renderStars(comment.getRating()) + " " + comment.getText();
+                String userName = CSVManager.getUserNameFromUserId(comment.getUsercode());  // Récupère le nom d'utilisateur à partir de l'ID
+                String displayText = renderStars(comment.getRating()) + " " + userName + ": " + comment.getText();
                 JLabel commentLabel = new JLabel(displayText);
                 commentsPanel.add(commentLabel);
             }
@@ -84,6 +85,7 @@ public class FilmDetailsForm {
         commentsPanel.revalidate();
         commentsPanel.repaint();
     }
+
 
     private String renderStars(String rating) {
         int intRating;

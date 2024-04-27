@@ -1,3 +1,7 @@
 id;firstname;lastname;email;password;address;passphrase;num
 USR2;fi;las;email@gmail;pass;add;mabelle;78
 USR3;fi;las;a;b;add;mabelle;78
+USR4;a;b;em;c;d;mabelle;7
+USR5;user;testeur;user@test;jdispas;jdispas;mabelle;7000000
+USR6;user;deux;user2@test;jdispas;jdispas;mabelle;7000000
+USR7;user;trois;user3@test;jdispas;jdispas;mabelle;7000000

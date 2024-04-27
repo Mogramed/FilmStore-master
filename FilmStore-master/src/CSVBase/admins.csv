@@ -1,3 +1,5 @@
 id;firstname;lastname;email;password
-USR2;b;c;a;d
-USR3;c;d;b;e
+ADM2;b;c;a;d
+ADM3;c;d;b;e
+ADM4;adm;adm;adm;adm
+ADM5;admin;testeur;admin@test;jdispas

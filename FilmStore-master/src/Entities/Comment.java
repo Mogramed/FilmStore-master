@@ -33,4 +33,6 @@ public class Comment {
     public String getRating() {
         return rating;
     }
+
+
 }

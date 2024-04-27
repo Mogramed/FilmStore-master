@@ -14,7 +14,9 @@ public class AdminFilmDisplay extends FilmDisplay {
     public AdminFilmDisplay(FilmManager filmManager) {
         super(filmManager);
         this.filmManager = filmManager;
+
     }
+
 
     @Override
     protected JPanel createFilmCard(Film film) {
@@ -45,9 +47,6 @@ public class AdminFilmDisplay extends FilmDisplay {
             }
         }
     }
-
-
-
 
 
 

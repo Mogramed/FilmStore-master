@@ -167,7 +167,6 @@ public class Film {
         } catch (FileNotFoundException e) {
             System.err.println("File not found: " + file.getAbsolutePath());
         }
-        System.out.println(comments);
         return comments;
     }
 
