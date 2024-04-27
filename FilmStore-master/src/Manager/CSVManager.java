@@ -35,16 +35,17 @@ public class CSVManager {
         try (Scanner scanner = new Scanner(userFile)) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                String[] userDetails = line.split(";");  // Assurez-vous que le séparateur est correct
-                if (userDetails.length > 1 && userDetails[0].trim().equals(userId.trim())) {
-                    return userDetails[1];  // Supposons que le nom de l'utilisateur est à l'index 1
+                String[] userDetails = line.split(";");
+                if (userDetails[0].trim().equals(userId.trim())) {
+                    return userDetails[1] + " " + userDetails[2]; // firstname and lastname
                 }
             }
         } catch (FileNotFoundException e) {
             System.err.println("File not found: " + userFile.getAbsolutePath());
         }
-        return "Unknown User";  // Retourne un nom par défaut si l'utilisateur n'est pas trouvé
+        return "Unknown User";
     }
+
 
     public static boolean addCommentToFilm(String filmCode, String comment, String rating, String userid) {
         File file = new File(FILM_CSV_FILE_PATH);

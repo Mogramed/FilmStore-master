@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
+
 public class FilmDetailsForm {
     private Film film;
     private JTextField titleField = new JTextField(20);
@@ -18,6 +19,7 @@ public class FilmDetailsForm {
     private JTextField actorsField = new JTextField(20);
     private JTextField countryField = new JTextField(15);
     private JTextField priceField = new JTextField(5);
+    private JTextField durationField = new JTextField(5);
     private JTextArea descriptionArea = new JTextArea(5, 20);
     private JTextField themeField = new JTextField(20);
     private JTextField producersField = new JTextField(20);
@@ -47,6 +49,8 @@ public class FilmDetailsForm {
             producersField.setText(String.join(", ", film.getProducers()));
             actorsField.setText(String.join(", ", film.getMainactors()));
             countryField.setText(film.getCountry());
+            yearField.setText(film.getProductionYear());
+            durationField.setText(film.getDurationMinutes());
             priceField.setText(film.getPrice());
             descriptionArea.setText(film.getDescription());
             imageURLField.setText(film.getImageURL());
@@ -59,9 +63,11 @@ public class FilmDetailsForm {
             producersField.setText("");
             actorsField.setText("");
             countryField.setText("");
+            durationField.setText("");
             priceField.setText("");
             descriptionArea.setText("");
             imageURLField.setText("");
+            yearField.setText("");
             commentsPanel.removeAll();
         }
     }
@@ -137,24 +143,6 @@ public class FilmDetailsForm {
         }
     }
 
-    private void createNewFilm() {
-        this.film = Film.createEmptyFilm();  // Crée un nouveau film vide
-        populateFields(this.film);  // Remplit les champs du formulaire avec les détails du nouveau film
-        int result = JOptionPane.showConfirmDialog(null, getFormPanel(), "Add New Film", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (result == JOptionPane.OK_OPTION) {
-            try {
-                Film newFilm = updateFilmFromForm();
-                boolean success = CSVManager.addFilmToCSV(newFilm);
-                if (success) {
-                    JOptionPane.showMessageDialog(null, "New film added successfully!");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Failed to add new film.");
-                }
-            } catch (ParseException e) {
-                JOptionPane.showMessageDialog(null, "Error parsing new film details.");
-            }
-        }
-    }
 
 
     public JPanel getFormPanel() {
@@ -167,6 +155,8 @@ public class FilmDetailsForm {
 
         formPanel.add(new JLabel("Title:"), gbc);
         formPanel.add(titleField, gbc);
+        formPanel.add(new JLabel("Theme(s):"), gbc);
+        formPanel.add(themeField, gbc);
         formPanel.add(new JLabel("Year:"), gbc);
         formPanel.add(yearField, gbc);
         formPanel.add(new JLabel("Director(s):"), gbc);
@@ -175,6 +165,10 @@ public class FilmDetailsForm {
         formPanel.add(actorsField, gbc);
         formPanel.add(new JLabel("Country:"), gbc);
         formPanel.add(countryField, gbc);
+        formPanel.add(new JLabel("Duration (minutes):"), gbc);
+        formPanel.add(durationField, gbc);
+        formPanel.add(new JLabel("Producer(s):"), gbc);
+        formPanel.add(producersField, gbc);
         formPanel.add(new JLabel("Price:"), gbc);
         formPanel.add(priceField, gbc);
         formPanel.add(new JLabel("Description:"), gbc);
@@ -196,10 +190,11 @@ public class FilmDetailsForm {
         String description = descriptionArea.getText();
         String imageURL = imageURLField.getText();
         String productionYear = yearField.getText();
+        String duration = durationField.getText();
 
         Vector<Comment> comments = extractCommentsFromUI();
 
-        return new Film(film.getCode(), title, theme, description, directors, producers, actors, productionYear, film.getDurationMinutes(), country, price, imageURL, comments);
+        return new Film(film.getCode(), title, theme, description, directors, producers, actors, productionYear, duration, country, price, imageURL, comments);
     }
 
     private Vector<Comment> extractCommentsFromUI() {

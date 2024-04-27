@@ -23,14 +23,8 @@ public class AdminFilmDisplay extends FilmDisplay {
         // Ajout de boutons spécifiques à l'administration pour chaque film
         JButton modifyButton = new JButton("Modifier");
         modifyButton.addActionListener(e -> modifyFilm(film));
-
-        JButton deleteButton = new JButton("Supprimer");
-        deleteButton.addActionListener(e -> deleteFilm(film));
-
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(modifyButton);
-        buttonPanel.add(deleteButton);
-
         card.add(buttonPanel, BorderLayout.PAGE_END);
 
         return card;
@@ -53,14 +47,7 @@ public class AdminFilmDisplay extends FilmDisplay {
     }
 
 
-    private void deleteFilm(Film film) {
-        // Demander confirmation avant de supprimer un film
-        int response = JOptionPane.showConfirmDialog(null, "Voulez-vous vraiment supprimer le film : " + film.getTitle() + " ?", "Confirmation de suppression", JOptionPane.YES_NO_OPTION);
-        if (response == JOptionPane.YES_OPTION) {
-            filmManager.deleteFilm(film.getCode());
-            refreshFilmDisplay();
-        }
-    }
+
 
 
 

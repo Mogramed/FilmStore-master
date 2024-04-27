@@ -44,8 +44,6 @@ public class Film {
         return new Film(newId, "", Arrays.asList(""), "", Arrays.asList(""), Arrays.asList(""), Arrays.asList(""), "", "", "", "", "", new ArrayList<>());
     }
 
-
-
     public String getCode() {
         return code;
     }
@@ -145,6 +143,7 @@ public class Film {
         this.comments = comments;
     }
 
+    // Lors de l'extraction des commentaires à partir de la ligne CSV
     public List<Comment> getCommentsForFilm(String filmCode) {
         File file = new File("./FilmStore-master/src/CSVBase/films.csv");
         List<Comment> comments = new ArrayList<>();
@@ -153,29 +152,25 @@ public class Film {
                 String line = scanner.nextLine();
                 if (line.startsWith(filmCode + ";")) {
                     String[] parts = line.split(";");
-                    // Check if the comments column exists and is not empty
                     if (parts.length > 12 && !parts[12].isEmpty()) {
-                        String commentsPart = parts[12];
-                        // Split multiple comments
-                        String[] allComments = commentsPart.split("\\|");
+                        String[] allComments = parts[12].split("\\|");
                         for (String singleComment : allComments) {
-                            String[] commentDetails = singleComment.split(",", 3); // Split into three parts: text, rating, userId
+                            String[] commentDetails = singleComment.split(",", 3);
                             if (commentDetails.length == 3) {
-                                String commentText = commentDetails[0].trim();
-                                String rating = commentDetails[1].trim();
-                                String userId = commentDetails[2].trim();
-                                comments.add(new Comment(filmCode, commentText, rating, userId));
+                                comments.add(new Comment(commentDetails[0].trim(), commentDetails[1].trim(),filmCode, commentDetails[2].trim()));
                             }
                         }
                     }
-                    break; // Stop reading further if the film is found
+                    break;
                 }
             }
         } catch (FileNotFoundException e) {
             System.err.println("File not found: " + file.getAbsolutePath());
         }
+        System.out.println(comments);
         return comments;
     }
+
 
 
 }

@@ -1,5 +1,6 @@
 package Services;
 
+import Entities.Comment;
 import Entities.Film;
 import Manager.CSVManager;
 import Manager.FilmManager;
@@ -70,17 +71,17 @@ public class FilmDisplay {
         addToCard(card, new JLabel("Director: " + String.join(", ", film.getDirector())), false);
         addToCard(card, new JLabel("Price: $" + film.getPrice()), true);
 
-        // Add comments
-        if (film.getCommentsForFilm(film.getCode()) != null) {
-            film.getCommentsForFilm(film.getCode()).stream().limit(3).forEach(comment -> {
-                // Assurez-vous que le commentaire et la note sont séparés correctement
-                String[] parts = comment.getText().split(",", 2); // Split en deux parties, au cas où le commentaire contient des virgules
-                String commentText = parts[0];
-                String rating = parts.length > 1 ? parts[1] : "0"; // Prend la deuxième partie pour la note, ou "0" si non disponible
-                String commentDisplay = renderStars(rating) + " " + commentText; // Affiche les étoiles suivies du texte
-                addToCard(card, new JLabel(commentDisplay), false);
-            });
-        }
+        // Display up to three comments
+        List<Comment> comments = film.getCommentsForFilm(film.getCode());
+        comments.stream().limit(3).forEach(comment -> {
+            String userName = CSVManager.getUserNameFromUserId(comment.getUsercode());
+            String commentDisplay = userName + ": " + renderStars(comment.getRating()) + " - " + comment.getText();
+            addToCard(card, new JLabel(commentDisplay), false);
+        });
+
+        JButton commentsButton = new JButton("View All Comments");
+        commentsButton.addActionListener(e -> showAllComments(film));
+        card.add(commentsButton);
 
 
         JButton addCommentButton = new JButton("Add Comment");
@@ -146,6 +147,16 @@ public class FilmDisplay {
     }
 
 
+    // Méthode pour ajouter des commentaires à la carte du film
+    private void addCommentsToCard(JPanel card, Film film) {
+        List<Comment> comments = film.getCommentsForFilm(film.getCode());
+        comments.stream().limit(3).forEach(comment -> {
+            String userName = CSVManager.getUserNameFromUserId(comment.getUsercode());
+            String commentDisplay = userName + ": " + renderStars(comment.getRating()) + " - " + comment.getText();
+            addToCard(card, new JLabel(commentDisplay), false);
+        });
+    }
+
     private String askForRating() {
         Object[] options = {"1", "2", "3", "4", "5"};
         int selectedIndex = -1;
@@ -164,6 +175,28 @@ public class FilmDisplay {
         return String.valueOf(selectedIndex + 1);  // Retourne la note sélectionnée (1-5)
     }
 
+
+    // Afficher tous les commentaires
+    private void showAllComments(Film film) {
+        JDialog commentsDialog = new JDialog(frame, "All Comments for " + film.getTitle(), true);
+        JPanel commentPanel = new JPanel();
+        commentPanel.setLayout(new BoxLayout(commentPanel, BoxLayout.Y_AXIS));
+
+        List<Comment> comments = film.getCommentsForFilm(film.getCode());
+        for (Comment comment : comments) {
+            String userName = CSVManager.getUserNameFromUserId(comment.getUsercode());
+            JLabel commentLabel = new JLabel("<html><strong>" + userName + "</strong>: " + renderStars(comment.getRating()) +
+                    "<br/>" + comment.getText() + "<br/><br/></html>");
+            commentPanel.add(commentLabel);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(commentPanel);
+        scrollPane.setPreferredSize(new Dimension(400, 300));
+        commentsDialog.add(scrollPane);
+        commentsDialog.pack();
+        commentsDialog.setLocationRelativeTo(frame);
+        commentsDialog.setVisible(true);
+    }
 
     private JLabel createImageLabel(String imageUrl) {
         JLabel imageLabel = new JLabel();
@@ -210,10 +243,13 @@ public class FilmDisplay {
         JPanel detailsPanel = new JPanel(new GridLayout(0, 1, 10, 10));
         detailsPanel.add(new JLabel("Title: " + film.getTitle()));
         detailsPanel.add(new JLabel("Year: " + film.getProductionYear()));
+        detailsPanel.add(new JLabel("Theme(s): " + String.join(", ", film.getTheme())));
         detailsPanel.add(new JLabel("Director: " + String.join(", ", film.getDirector())));
         detailsPanel.add(new JLabel("Actors: " + String.join(", ", film.getMainactors())));
         detailsPanel.add(new JLabel("Country: " + film.getCountry()));
+        detailsPanel.add(new JLabel("Producer(s): " + String.join(", ", film.getProducers())));
         detailsPanel.add(new JLabel("Price: " + film.getPrice() + " euros "));
+        detailsPanel.add(new JLabel("Duration: " + film.getDurationMinutes()));
         detailsPanel.add(new JLabel("Description: " + film.getDescription()));
         detailsPanel.add(new JLabel("Commentaires: \n" + film.getCommentsForFilm(film.getCode())));
 
@@ -234,13 +270,16 @@ public class FilmDisplay {
     public void refreshFilmDisplay() {
         filmPanel.removeAll();
 
-        List<Film> updatedFilms = filmManager.getAllFilms();
+        // Appel de la méthode pour charger ou recharger les films depuis le CSV
+        List<Film> updatedFilms = filmManager.loadFilms();
+
         for (Film film : updatedFilms) {
             filmPanel.add(createFilmCard(film));
         }
         filmPanel.revalidate();
         filmPanel.repaint();
     }
+
 
     private void addToCart(Film film) {
         // Implémenter ici

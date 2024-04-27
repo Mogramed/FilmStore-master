@@ -102,23 +102,6 @@ public class FilmManager {
         return loadedFilms;
     }
 
-    // Méthode pour obtenir le nom d'utilisateur à partir du code utilisateur
-    public String getUserNameFromUserCode(String userCode) {
-        File userFile = new File("./FilmStore-master/src/CSVBase/users.csv");
-        try (Scanner scanner = new Scanner(userFile)) {
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                String[] userDetails = line.split(";");  // Assurez-vous que le délimiteur est correct
-                if (userDetails[0].trim().equals(userCode.trim())) {
-                    return userDetails[1];  // Supposons que le nom est dans la deuxième colonne
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.err.println("File not found: " + userFile.getAbsolutePath());
-        }
-        return "Unknown User";  // Nom par défaut si le code utilisateur n'est pas trouvé
-    }
-
 
 
     public void displayFilmComments() {
@@ -161,14 +144,6 @@ public class FilmManager {
                 films.set(i, updatedFilm);
                 return CSVManager.updateFilmInCSV(updatedFilm);
             }
-        }
-        return false;
-    }
-
-    public boolean deleteFilm(String code) {
-        boolean removed = films.removeIf(film -> film.getCode().equals(code));
-        if (removed) {
-            return CSVManager.deleteFilmFromCSV(code);
         }
         return false;
     }
