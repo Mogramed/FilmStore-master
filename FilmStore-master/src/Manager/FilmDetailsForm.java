@@ -28,7 +28,7 @@ public class FilmDetailsForm {
     private JButton newFilmButton;
 
     public FilmDetailsForm(Film film) {
-        this.film = film ;
+        this.film = (film != null) ? film : Film.createEmptyFilm();
         initializeCommentsPanel();
         populateFields(this.film);
         setupButtons();
@@ -98,43 +98,65 @@ public class FilmDetailsForm {
     }
 
 
-
     private void setupButtons() {
         saveButton = new JButton("Save Changes");
-        saveButton.addActionListener(e -> {
-            try {
-                Film updatedFilm = updateFilmFromForm();
-                boolean success = CSVManager.updateFilmInCSV(updatedFilm);
-                if (success) {
-                    JOptionPane.showMessageDialog(null, "Film updated successfully!");
-                } else {
-                    JOptionPane.showMessageDialog(null, "Failed to update film.");
-                }
-            } catch (ParseException ex) {
-                JOptionPane.showMessageDialog(null, "Error parsing film details.");
-            }
-        });
+        saveButton.addActionListener(e -> saveChanges());
 
         deleteButton = new JButton("Delete Film");
-        deleteButton.addActionListener(e -> {
+        deleteButton.addActionListener(e -> deleteFilm());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(saveButton);
+        buttonPanel.add(deleteButton);
+        commentsPanel.add(buttonPanel);
+    }
+
+    private void saveChanges() {
+        try {
+            Film updatedFilm = updateFilmFromForm();
+            boolean success = CSVManager.updateFilmInCSV(updatedFilm);
+            if (success) {
+                JOptionPane.showMessageDialog(null, "Film updated successfully!");
+            } else {
+                JOptionPane.showMessageDialog(null, "Failed to update film.");
+            }
+        } catch (ParseException ex) {
+            JOptionPane.showMessageDialog(null, "Error parsing film details.");
+        }
+    }
+
+    private void deleteFilm() {
+        int response = JOptionPane.showConfirmDialog(null, "Confirm delete for film: " + film.getTitle() + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
             boolean success = CSVManager.deleteFilmFromCSV(film.getCode());
             if (success) {
                 JOptionPane.showMessageDialog(null, "Film deleted successfully!");
             } else {
                 JOptionPane.showMessageDialog(null, "Failed to delete film.");
             }
-        });
-
-        newFilmButton = new JButton("New Film");
-        //newFilmButton.addActionListener(e -> populateFields(new Film()));
-
-        // Add buttons to form
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(saveButton);
-        buttonPanel.add(deleteButton);
-        buttonPanel.add(newFilmButton);
-        commentsPanel.add(buttonPanel);
+        }
     }
+
+    private void createNewFilm() {
+        this.film = Film.createEmptyFilm();  // Crée un nouveau film vide
+        populateFields(this.film);  // Remplit les champs du formulaire avec les détails du nouveau film
+        int result = JOptionPane.showConfirmDialog(null, getFormPanel(), "Add New Film", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                Film newFilm = updateFilmFromForm();
+                boolean success = CSVManager.addFilmToCSV(newFilm);
+                if (success) {
+                    JOptionPane.showMessageDialog(null, "New film added successfully!");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to add new film.");
+                }
+            } catch (ParseException e) {
+                JOptionPane.showMessageDialog(null, "Error parsing new film details.");
+            }
+        }
+    }
+
+
     public JPanel getFormPanel() {
         JPanel formPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -186,19 +208,27 @@ public class FilmDetailsForm {
         for (Component comp : commentComponents) {
             if (comp instanceof JPanel) {
                 Component[] componentsInPanel = ((JPanel) comp).getComponents();
-                JLabel textLabel = (JLabel) componentsInPanel[0]; // Supposons que le JLabel du texte soit le premier composant
-                JLabel nameLabel = (JLabel) componentsInPanel[1]; // Supposons que le JLabel du nom de l'utilisateur soit le deuxième composant
-                JLabel starLabel = (JLabel) componentsInPanel[2]; // Supposons que le JLabel des étoiles soit le troisième composant
+                // Assurer que les composants sont JLabel avant de les caster
+                if (componentsInPanel.length >= 3 &&
+                        componentsInPanel[0] instanceof JLabel &&
+                        componentsInPanel[2] instanceof JLabel &&
+                        componentsInPanel[1] instanceof JLabel) {
 
-                String text = textLabel.getText();
-                String userName = nameLabel.getText();
-                int rating = parseRatingFromStars(starLabel.getText()); // Supposons une méthode parseRatingFromStars qui extrait le rating à partir du texte
+                    JLabel textLabel = (JLabel) componentsInPanel[0]; // JLabel du texte
+                    JLabel nameLabel = (JLabel) componentsInPanel[2]; // JLabel du nom de l'utilisateur
+                    JLabel starLabel = (JLabel) componentsInPanel[1]; // JLabel des étoiles
 
-                comments.add(new Comment(text, Integer.toString(rating), film.getCode(), userName));
+                    String text = textLabel.getText();
+                    String userName = nameLabel.getText();
+                    int rating = parseRatingFromStars(starLabel.getText()); // Méthode pour extraire le rating à partir du texte des étoiles
+
+                    comments.add(new Comment(text, Integer.toString(rating), film.getCode(), userName));
+                }
             }
         }
         return comments;
     }
+
 
 
     private int parseRatingFromStars(String text) {
@@ -210,6 +240,7 @@ public class FilmDetailsForm {
         }
         return rating;
     }
+
 
 
 

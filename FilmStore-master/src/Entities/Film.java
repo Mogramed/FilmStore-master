@@ -1,10 +1,10 @@
 package Entities;
 
+import Manager.CSVManager;
+
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Film {
     private String code;
@@ -37,6 +37,14 @@ public class Film {
         this.imageURL = imageURL;
         this.comments = new ArrayList<>();
     }
+
+    // Dans votre classe Film
+    public static Film createEmptyFilm() {
+        String newId = CSVManager.generateNextFilmId();
+        return new Film(newId, "", Arrays.asList(""), "", Arrays.asList(""), Arrays.asList(""), Arrays.asList(""), "", "", "", "", "", new ArrayList<>());
+    }
+
+
 
     public String getCode() {
         return code;

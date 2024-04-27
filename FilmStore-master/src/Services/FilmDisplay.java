@@ -28,12 +28,17 @@ public class FilmDisplay {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         ImageIcon refreshIcon = new ImageIcon(new ImageIcon("./FilmStore-master/src/util/refresh.png").getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH));
         JButton refreshButton = new JButton(refreshIcon);
+
+        JButton newFilmButton = new JButton("Add New Film");
+        newFilmButton.addActionListener(e -> filmManager.createAndAddFilm());
+        topPanel.add(newFilmButton);
+
         refreshButton.setPreferredSize(new Dimension(30, 30));
         refreshButton.addActionListener(e -> refreshFilmDisplay());
         topPanel.add(refreshButton);
 
-        frame.add(topPanel, BorderLayout.NORTH);
 
+        frame.add(topPanel, BorderLayout.NORTH);
         filmPanel.setLayout(new WrapLayout(FlowLayout.LEFT));
 
         List<Film> films = filmManager.getFilms();
@@ -43,7 +48,11 @@ public class FilmDisplay {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         frame.add(scrollPane, BorderLayout.CENTER);
         frame.setVisible(true);
+
+        refreshFilmDisplay();
     }
+
+
 
 
     JPanel createFilmCard(Film film) {
@@ -109,9 +118,6 @@ public class FilmDisplay {
 
 
 
-
-
-
     private void addComment(Film film) {
         // Demander le texte du commentaire
         String commentText = JOptionPane.showInputDialog(frame, "Enter your comment:");
@@ -159,26 +165,6 @@ public class FilmDisplay {
     }
 
 
-
-/*
-    private void showAllComments(Film film) {
-        JDialog commentsDialog = new JDialog(frame, "All Comments", true);
-        commentsDialog.setLayout(new BorderLayout());
-        JPanel commentPanel = new JPanel();
-        commentPanel.setLayout(new BoxLayout(commentPanel, BoxLayout.PAGE_AXIS));
-
-        List<Comment> comments = film.getCommentsForFilm(film.getCode());
-        for (Comment comment : comments) {
-            commentPanel.add(new JLabel(comment.getText() + " - " + renderStars(comment.getRating())));
-        }
-
-        JScrollPane scrollPane = new JScrollPane(commentPanel);
-        commentsDialog.add(scrollPane, BorderLayout.CENTER);
-        commentsDialog.setSize(300, 400);
-        commentsDialog.setLocationRelativeTo(frame);
-        commentsDialog.setVisible(true);
-    }
-*/
     private JLabel createImageLabel(String imageUrl) {
         JLabel imageLabel = new JLabel();
         try {

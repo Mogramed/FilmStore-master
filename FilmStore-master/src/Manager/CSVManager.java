@@ -96,41 +96,57 @@ public class CSVManager {
     }
 
 
-
-
-
-/*
-    public static List<Comment> getAllCommentsForFilm(String filmCode) {
-        List<Comment> comments = new ArrayList<>();
-        File file = new File("./FilmStore-master/src/CSVBase/films.csv");
+    public static String generateNextFilmId() {
+        File file = new File(FILM_CSV_FILE_PATH);
+        int maxId = 0;
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                if (line.startsWith(filmCode + ";")) {
-                    String[] parts = line.split(";");
-                    if (parts.length > 11 && !parts[11].isEmpty()) {
-                        String commentsPart = parts[11]; // Assumes comments are in the 12th column
-                        for (String commentDetail : commentsPart.split(",")) {
-                            String[] commentParts = commentDetail.trim().split("\\|");
-                            if (commentParts.length == 2) {
-                                String text = commentParts[0].trim();
-                                String rating = commentParts[1].trim();
-                                comments.add(new Comment(filmCode, text, rating));
-                            }
-                        }
+                String[] parts = line.split(";");
+                if (parts[0].startsWith("FLM")) {
+                    int idNum = Integer.parseInt(parts[0].substring(3));  // Extrait le nombre après "FLM"
+                    if (idNum > maxId) {
+                        maxId = idNum;
                     }
-                    break; // Stop searching after finding the correct film
                 }
             }
         } catch (FileNotFoundException e) {
             System.err.println("File not found: " + file.getAbsolutePath());
         }
-        return comments;
+        return "FLM" + String.format("%03d", maxId + 1);  // Format ID as FLM001, FLM002, etc.
     }
 
-*/
 
+    public static boolean addFilmToCSV(Film newFilm) {
+        boolean isAdded = false;
+        // Construire la nouvelle ligne avec les données du nouveau film
+        String newLine = newFilm.getCode() + ";" +
+                newFilm.getTitle() + ";" +
+                "\"" + String.join(",", newFilm.getTheme()) + "\"" + ";" +
+                "\"" + newFilm.getDescription() + "\"" + ";" +
+                "\"" + String.join(",", newFilm.getDirector()) + "\"" + ";" +
+                "\"" + String.join(",", newFilm.getProducers()) + "\"" + ";" +
+                "\"" + String.join(",", newFilm.getMainactors()) + "\"" + ";" +
+                newFilm.getProductionYear() + ";" +
+                newFilm.getDurationMinutes() + ";" +
+                newFilm.getCountry() + ";" +
+                newFilm.getPrice() + ";" +
+                newFilm.getImageURL() + ";" +
+                serializeComments(newFilm.getComments());
 
+        try (FileWriter fw = new FileWriter(FILM_CSV_FILE_PATH, true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+            out.println(newLine);  // Écrit la nouvelle ligne à la fin du fichier
+            isAdded = true;
+        } catch (IOException e) {
+            System.err.println("Failed to write to the file: " + FILM_CSV_FILE_PATH);
+            e.printStackTrace();
+            return false;
+        }
+
+        return isAdded;
+    }
 
 
 
@@ -185,7 +201,7 @@ public class CSVManager {
         return isUpdated;
     }
 
-    private String serializeComments(List<Comment> comments) {
+    private static String serializeComments(List<Comment> comments) {
         return comments.stream()
                 .map(c -> c.getText() + "," + c.getRating() + "," + c.getUsercode())
                 .collect(Collectors.joining("|"));

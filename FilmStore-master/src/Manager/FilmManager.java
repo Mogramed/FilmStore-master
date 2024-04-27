@@ -1,7 +1,9 @@
 package Manager;
 import Entities.*;
 
+import javax.swing.*;
 import java.io.*;
+import java.text.ParseException;
 import java.util.*;
 
 
@@ -17,45 +19,39 @@ public class FilmManager {
     }
 
 
-    public void deleteFilm(String code) {
-        List<String> remainingLines = new ArrayList<>();
-        boolean found = false;
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILM_CSV_FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.startsWith(code + ";")) {
-                    remainingLines.add(line);
-                } else {
-                    found = true;
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
-            return;
-        }
-
-        if (found) {
-            try (PrintWriter writer = new PrintWriter(new FileWriter(FILM_CSV_FILE_PATH))) {
-                for (String line : remainingLines) {
-                    writer.println(line);
-                }
-            } catch (IOException e) {
-                System.err.println("Error writing file: " + e.getMessage());
-            }
-            System.out.println("Film deleted successfully.");
-        } else {
-            System.out.println("Film not found.");
-        }
-    }
     public List<Film> getAllFilms() {
         return new ArrayList<>(films);
     }
 
-
-
-
     public List<Film> getFilms() {
         return films;
+    }
+
+
+    public void createAndAddFilm() {
+        Film newFilm = Film.createEmptyFilm(); // Assurez-vous que cette méthode existe et crée un objet Film correctement initialisé
+        FilmDetailsForm form = new FilmDetailsForm(newFilm);
+        int result = JOptionPane.showConfirmDialog(null, form.getFormPanel(), "Add New Film", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                Film finalFilm = form.updateFilmFromForm();
+                if (addFilm(finalFilm)) {
+                    JOptionPane.showMessageDialog(null, "New film added successfully!");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to add new film.");
+                }
+            } catch (ParseException e) {
+                JOptionPane.showMessageDialog(null, "Error parsing new film details.");
+            }
+        }
+    }
+
+    public boolean addFilm(Film newFilm) {
+        if (newFilm != null) {
+            films.add(newFilm);
+            return CSVManager.addFilmToCSV(newFilm);
+        }
+        return false;
     }
 
     public List<Film> loadFilms() {
@@ -158,5 +154,23 @@ public class FilmManager {
         return stars.toString();
     }
 
+
+    public boolean updateFilm(String code, Film updatedFilm) {
+        for (int i = 0; i < films.size(); i++) {
+            if (films.get(i).getCode().equals(code)) {
+                films.set(i, updatedFilm);
+                return CSVManager.updateFilmInCSV(updatedFilm);
+            }
+        }
+        return false;
+    }
+
+    public boolean deleteFilm(String code) {
+        boolean removed = films.removeIf(film -> film.getCode().equals(code));
+        if (removed) {
+            return CSVManager.deleteFilmFromCSV(code);
+        }
+        return false;
+    }
 
 }
