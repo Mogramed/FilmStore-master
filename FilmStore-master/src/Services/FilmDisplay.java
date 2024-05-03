@@ -135,13 +135,24 @@ public class FilmDisplay {
             String rating = askForRating();
             String userId = SessionContext.getCurrentUserId();  // Récupère l'ID de l'utilisateur actuel
 
-            boolean success = CSVManager.addCommentToFilm(film.getCode(), commentText, rating, userId);
+            boolean success = CSVManager.addCommentToFilmAndUser(film.getCode(), commentText, rating, userId);
             if (success) {
                 JOptionPane.showMessageDialog(frame, "Comment added successfully!");
                 refreshFilmDisplay();  // Rafraîchit l'affichage pour montrer le nouveau commentaire
             } else {
                 JOptionPane.showMessageDialog(frame, "Failed to add comment.");
             }
+        }
+    }
+
+
+    private void removeComment(Film film, String userId, String commentText, String rating) {
+        boolean success = CSVManager.removeCommentFromFilm(film.getCode(), commentText, rating, userId);
+        if (success) {
+            JOptionPane.showMessageDialog(frame, "Comment removed successfully!");
+            refreshFilmDisplay();  // Mise à jour de l'affichage pour refléter la suppression du commentaire
+        } else {
+            JOptionPane.showMessageDialog(frame, "Failed to remove comment.");
         }
     }
 

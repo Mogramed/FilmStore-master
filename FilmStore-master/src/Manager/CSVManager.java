@@ -2,9 +2,7 @@ package Manager;
 
 
 import Entities.*;
-
 import java.io.*;
-import java.security.cert.Extension;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,6 +102,109 @@ public class CSVManager {
         return found;
     }
 
+    // Ajoute un commentaire à la fois dans le fichier des films et des utilisateurs
+    public static boolean addCommentToFilmAndUser(String filmCode, String comment, String rating, String userId) {
+        if (addCommentToFilm(filmCode, comment, rating, userId)) {
+            return addCommentToUser(userId, comment, rating, filmCode);
+        }
+        return false;
+    }
+
+    // Ajoute un commentaire dans la base de données des utilisateurs
+    public static boolean addCommentToUser(String userId, String comment, String rating, String filmCode) {
+        File file = new File(USER_CSV_FILE_PATH);
+        List<String> lines = new ArrayList<>();
+        boolean updated = false;
+        String newCommentEntry = comment + "," + rating + "," + filmCode;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(userId + ";")) {
+                    String[] parts = line.split(";", -1); // Inclut les colonnes vides à la fin
+                    if (parts.length > 8) { // Assuming comments are at index 8
+                        parts[8] = parts[8].isEmpty() ? newCommentEntry : parts[8] + "|" + newCommentEntry;
+                    } else {
+                        // Extend the array to include the comments column if it does not exist
+                        String[] newParts = Arrays.copyOf(parts, 9);
+                        newParts[8] = newCommentEntry;
+                        parts = newParts;
+                    }
+                    line = String.join(";", parts);
+                    updated = true;
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to read the file: " + file.getAbsolutePath());
+            e.printStackTrace();
+            return false;
+        }
+
+        if (updated) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+                for (String modifiedLine : lines) {
+                    writer.println(modifiedLine);
+                }
+            } catch (IOException e) {
+                System.err.println("Failed to write to the file: " + file.getAbsolutePath());
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        return updated;
+    }
+
+
+    // Supprime un commentaire de la base des films et des utilisateurs
+    public static boolean removeCommentFromFilmAndUser(String filmCode, String userId, String rating, String commentText) {
+        if (removeCommentFromFilm(filmCode, commentText, rating, userId)) {
+            return removeCommentFromUser(userId, commentText, rating, filmCode);
+        }
+        return false;
+    }
+
+    public static boolean removeCommentFromUser(String userId, String comment, String rating, String filmCode) {
+        File file = new File(USER_CSV_FILE_PATH);
+        List<String> lines = new ArrayList<>();
+        boolean found = false;
+        String targetCommentEntry = comment + "," + rating + "," + filmCode; // Assurez-vous que cette chaîne correspond exactement à celle lors de l'ajout.
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(userId + ";")) {
+                    String[] parts = line.split(";", -1);
+                    if (parts.length > 8 && !parts[8].isEmpty()) {
+                        List<String> comments = new ArrayList<>(Arrays.asList(parts[8].split("\\|")));
+                        boolean removed = comments.removeIf(c -> c.equals(targetCommentEntry)); // Vérifie si la suppression a eu lieu
+                        if (removed) {
+                            found = true; // Marque que la suppression a réussi si au moins un élément a été supprimé
+                        }
+                        parts[8] = String.join("|", comments); // Rejoindre les commentaires restants
+                        line = String.join(";", parts);
+                    }
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        if (found) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+                for (String modifiedLine : lines) {
+                    writer.println(modifiedLine);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return found;
+    }
 
 
     public static boolean addCommentToFilm(String filmCode, String comment, String rating, String userId) {
@@ -163,6 +264,45 @@ public class CSVManager {
         return updated;
     }
 
+    public static boolean removeCommentFromFilm(String filmCode, String comment, String rating, String userId) {
+        File file = new File(FILM_CSV_FILE_PATH);
+        List<String> lines = new ArrayList<>();
+        boolean found = false;
+        String targetCommentEntry = comment + "," + rating + "," + userId; // Format du commentaire à supprimer.
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(filmCode + ";")) {
+                    String[] parts = line.split(";", -1);
+                    if (parts.length > 12 && !parts[12].isEmpty()) {
+                        List<String> comments = new ArrayList<>(Arrays.asList(parts[12].split("\\|")));
+                        if (comments.removeIf(c -> c.equals(targetCommentEntry))) { // Vérifie si le commentaire exact est trouvé et supprimé.
+                            found = true;
+                        }
+                        parts[12] = String.join("|", comments); // Rejoindre les commentaires restants
+                        line = String.join(";", parts);
+                    }
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        if (found) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+                for (String modifiedLine : lines) {
+                    writer.println(modifiedLine);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return found;
+    }
 
 
 
