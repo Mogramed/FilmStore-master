@@ -82,7 +82,7 @@ public class FilmDisplay {
         // Display up to three comments
         List<Comment> comments = film.getCommentsForFilm(film.getCode());
         comments.stream().limit(3).forEach(comment -> {
-            String commentDisplay = comment.getUsercode() + ": " + renderStars(comment.getRating()) + " - " + comment.getText();
+            String commentDisplay = comment.getUserNameFromUserId(comment.getUsercode()) + ": " + renderStars(comment.getRating()) + " - " + comment.getText();
             addToCard(card, new JLabel(commentDisplay), false);
         });
 
@@ -108,7 +108,7 @@ public class FilmDisplay {
 
 
 
-    private String renderStars(String ratingStr) {
+    protected String renderStars(String ratingStr) {
         int rating;
         try {
             rating = Integer.parseInt(ratingStr); // Tente de convertir la note en entier
@@ -146,18 +146,6 @@ public class FilmDisplay {
     }
 
 
-    private void removeComment(Film film, String userId, String commentText, String rating) {
-        boolean success = CSVManager.removeCommentFromFilm(film.getCode(), commentText, rating, userId);
-        if (success) {
-            JOptionPane.showMessageDialog(frame, "Comment removed successfully!");
-            refreshFilmDisplay();  // Mise à jour de l'affichage pour refléter la suppression du commentaire
-        } else {
-            JOptionPane.showMessageDialog(frame, "Failed to remove comment.");
-        }
-    }
-
-
-
     private String askForRating() {
         Object[] options = {"1", "2", "3", "4", "5"};
         int selectedIndex = -1;
@@ -178,7 +166,7 @@ public class FilmDisplay {
 
 
     // Afficher tous les commentaires
-    private void showAllComments(Film film) {
+    protected void showAllComments(Film film) {
         JDialog commentsDialog = new JDialog(frame, "All Comments for " + film.getTitle(), true);
         JPanel commentPanel = new JPanel();
         commentPanel.setLayout(new BoxLayout(commentPanel, BoxLayout.Y_AXIS));
@@ -225,7 +213,7 @@ public class FilmDisplay {
     private void updateCommentPanel(List<Comment> comments, JPanel commentPanel) {
         commentPanel.removeAll();
         for (Comment comment : comments) {
-            String userName = comment.getUsercode();
+            String userName = comment.getUserNameFromUserId(comment.getUsercode());
             JLabel commentLabel = new JLabel("<html><strong>" + userName + "</strong>: " + renderStars(comment.getRating()) +
                     "<br/>" + comment.getText() + "<br/><br/></html>");
             commentPanel.add(commentLabel);

@@ -1,7 +1,7 @@
-id;firstname;lastname;email;password;address;passphrase;num
+id;firstname;lastname;email;password;address;passphrase;num;comments
 USR2;fi;las;email@gmail;pass;add;mabelle;78
 USR3;fi;las;a;b;add;mabelle;78
 USR4;a;b;em;c;d;mabelle;7
-USR5;user;testeur;user@test;jdispas;jdispas;mabelle;7000000
-USR6;user;deux;user2@test;jdispas;jdispas;mabelle;7000000
-USR7;user;trois;user3@test;jdispas;jdispas;mabelle;7000000;j'aime bien !,4,LOTR002|il est cool ,4,DUNE002
+USR5;user;testeur;user@test;jdispas;jdispas;mabelle;7000000;Ce film est incroyable ! On voit tout le talent de Nolan. Une pure dinguerie !,5,INT001|Que dire à part le mot INCROYABLE ! Encore meilleur que le premier. J'attends le 3 avec impatience !,5,DUNE002|petit test qui fonctionne mashallah !,5,FLM001|bof j'ai pas trop aimer y'a beaucoup de longueur et pas assez d'actions mais on m'a dit que les prochains se rattrapent bien donc à voir :),3,LOTR001
+USR6;user;deux;user2@test;jdispas;jdispas;mabelle;7000000;Ce film est excellent dans tous les sens. l'histoire est originale : Le film est beau et on passe par tous les sentiments. ,5,INT001|JE L'AI VU 5 FOIS !!!,5,DUNE002
+USR7;user;trois;user3@test;jdispas;jdispas;mabelle;7000000

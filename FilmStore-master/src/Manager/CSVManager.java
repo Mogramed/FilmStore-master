@@ -51,7 +51,6 @@ public class CSVManager {
                 String line = scanner.nextLine();
                 String[] userDetails = line.split(";");
                 if (userDetails[0].trim().equals(userId.trim())) {
-                    System.out.println(userDetails[1] + " " + userDetails[2]);
                     return userDetails[1] + " " + userDetails[2]; // firstname and lastname
                 }
             }
@@ -62,45 +61,6 @@ public class CSVManager {
     }
 
 
-    public static boolean removeComment(String filmCode, String userCode, String commentText) {
-        File file = new File(FILM_CSV_FILE_PATH);
-        List<String> lines = new ArrayList<>();
-        boolean found = false;
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith(filmCode + ";")) {
-                    String[] parts = line.split(";", -1);
-                    if (parts.length > 12) { // Ensuring there is a comment part
-                        String comments = parts[12];
-                        List<String> updatedComments = Arrays.stream(comments.split("\\|"))
-                                .filter(c -> !c.startsWith(userCode + "," + commentText))
-                                .collect(Collectors.toList());
-                        parts[12] = String.join("|", updatedComments);
-                        line = String.join(";", parts);
-                        found = true;
-                    }
-                }
-                lines.add(line);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        if (found) {
-            try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
-                for (String modifiedLine : lines) {
-                    writer.println(modifiedLine);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-        return found;
-    }
 
     // Ajoute un commentaire à la fois dans le fichier des films et des utilisateurs
     public static boolean addCommentToFilmAndUser(String filmCode, String comment, String rating, String userId) {
@@ -169,21 +129,26 @@ public class CSVManager {
         File file = new File(USER_CSV_FILE_PATH);
         List<String> lines = new ArrayList<>();
         boolean found = false;
-        String targetCommentEntry = comment + "," + rating + "," + filmCode; // Assurez-vous que cette chaîne correspond exactement à celle lors de l'ajout.
+        String targetCommentEntry = (comment.trim() + "," + rating.trim() + "," + filmCode.trim()).toLowerCase();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith(userId + ";")) {
+                if (line.contains(userId + ";")) {  // Modification pour vérifier la présence de l'ID utilisateur dans la ligne
                     String[] parts = line.split(";", -1);
                     if (parts.length > 8 && !parts[8].isEmpty()) {
-                        List<String> comments = new ArrayList<>(Arrays.asList(parts[8].split("\\|")));
-                        boolean removed = comments.removeIf(c -> c.equals(targetCommentEntry)); // Vérifie si la suppression a eu lieu
+                        List<String> comments = Arrays.stream(parts[8].split("\\|"))
+                                .map(String::trim) // Nettoie les espaces autour des commentaires
+                                .collect(Collectors.toList());
+                        boolean removed = comments.removeIf(c -> {
+                            String cleanedComment = c.toLowerCase(); // Nettoyage et mise en minuscule pour comparaison
+                            return cleanedComment.equals(targetCommentEntry);
+                        });
                         if (removed) {
-                            found = true; // Marque que la suppression a réussi si au moins un élément a été supprimé
+                            found = true;
+                            parts[8] = String.join("|", comments); // Rejoindre les commentaires restants
+                            line = String.join(";", parts);
                         }
-                        parts[8] = String.join("|", comments); // Rejoindre les commentaires restants
-                        line = String.join(";", parts);
                     }
                 }
                 lines.add(line);
@@ -194,7 +159,7 @@ public class CSVManager {
         }
 
         if (found) {
-            try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(file, false))) { // Mode écrasement
                 for (String modifiedLine : lines) {
                     writer.println(modifiedLine);
                 }
@@ -207,19 +172,19 @@ public class CSVManager {
     }
 
 
+
+
+
     public static boolean addCommentToFilm(String filmCode, String comment, String rating, String userId) {
         File file = new File(FILM_CSV_FILE_PATH);
         List<String> lines = new ArrayList<>();
         boolean updated = false;
-        String userName = getUserNameFromUserId(userId); // Récupérer le nom de l'utilisateur
-        System.out.println("Adding comment as: " + userName);
-
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith(filmCode + ";")) {
                     String[] parts = line.split(";", -1); // Utiliser -1 pour inclure les colonnes vides
-                    String newComment = comment + "," + rating + "," + userName;
+                    String newComment = comment + "," + rating + "," + userId;
 
                     // Ajouter ou mettre à jour le commentaire existant
                     if (parts.length > 12) {
