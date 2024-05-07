@@ -3,12 +3,15 @@ package Services;
 import Entities.Comment;
 import Entities.Film;
 import Manager.CSVManager;
+import Manager.CartManager;
 import Manager.FilmManager;
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FilmDisplay {
@@ -37,6 +40,13 @@ public class FilmDisplay {
             newFilmButton.addActionListener(e -> filmManager.createAndAddFilm());
             topPanel.add(newFilmButton);
         }
+
+        if (SessionContext.isUserAdmin() == false) {
+            JButton viewCartButton = new JButton("View Cart");
+            viewCartButton.addActionListener(e -> viewCart());  // Add an ActionListener to open the cart view
+            topPanel.add(viewCartButton);
+        }
+
         refreshButton.setPreferredSize(new Dimension(30, 30));
         refreshButton.addActionListener(e -> refreshFilmDisplay());
         topPanel.add(refreshButton);
@@ -91,15 +101,21 @@ public class FilmDisplay {
         commentsButton.addActionListener(e -> showAllComments(film));
         card.add(commentsButton);
 
-
-        JButton addCommentButton = new JButton("Add Comment");
-        addCommentButton.addActionListener(e -> addComment(film));
+        if (SessionContext.isUserAdmin() == false) {
+            JButton addCommentButton = new JButton("Add Comment");
+            addCommentButton.addActionListener(e -> addComment(film));
+            card.add(createButtonPanel(addCommentButton));
+        }
         JButton detailsButton = new JButton("Details");
-        JButton addToCartButton = new JButton("Add to Cart");
-        card.add(createButtonPanel(detailsButton, addCommentButton, addToCartButton));
+        if (SessionContext.isUserAdmin() == false) {
+            JButton addToCartButton = new JButton("Add to Cart");
+            card.add(createButtonPanel(addToCartButton));
+            addToCartButton.addActionListener(e -> addToCart(film));
+        }
+        card.add(createButtonPanel(detailsButton));
 
         detailsButton.addActionListener(e -> showFilmDetails(film));
-        addToCartButton.addActionListener(e -> addToCart(film));
+
 
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -323,9 +339,39 @@ public class FilmDisplay {
 
 
     private void addToCart(Film film) {
-        // Implémenter ici
-        JOptionPane.showMessageDialog(frame, film.getTitle() + " added to cart!");
+        String userId = SessionContext.getCurrentUserId();
+        if (userId != null) {
+            try {
+                if (CartManager.addToCart(userId, film.getCode())) {
+                    JOptionPane.showMessageDialog(frame, "Added to cart successfully!");
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Film is already in your cart.");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Failed to add to cart.");
+            }
+        }
     }
+
+    private void viewCart() {
+        String userId = SessionContext.getCurrentUserId();
+        System.out.println(userId);
+        if (userId != null) {
+            try {
+                Set<String> filmIds = CartManager.loadCart().get(userId);
+                if (filmIds != null && !filmIds.isEmpty()) {
+                    new CartDisplay(filmIds).setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Your cart is empty.");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Failed to load cart.");
+            }
+        }
+    }
+
 
 
 
