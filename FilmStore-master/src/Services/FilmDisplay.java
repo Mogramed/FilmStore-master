@@ -45,6 +45,11 @@ public class FilmDisplay {
             JButton viewCartButton = new JButton("View Cart");
             viewCartButton.addActionListener(e -> viewCart());  // Add an ActionListener to open the cart view
             topPanel.add(viewCartButton);
+
+            JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton accountButton = new JButton("Account");
+            //accountButton.addActionListener(e -> openAccountPage());
+            rightPanel.add(accountButton);
         }
 
         refreshButton.setPreferredSize(new Dimension(30, 30));
@@ -91,11 +96,18 @@ public class FilmDisplay {
 
         // Display up to three comments
         List<Comment> comments = film.getCommentsForFilm(film.getCode());
+        JPanel commentsPanel = new JPanel();
+        commentsPanel.setLayout(new BoxLayout(commentsPanel, BoxLayout.Y_AXIS));
+        // Limit to 3 comments view
         comments.stream().limit(3).forEach(comment -> {
-            String commentDisplay = comment.getUserNameFromUserId(comment.getUsercode()) + ": " + renderStars(comment.getRating()) + " - " + comment.getText();
-            addToCard(card, new JLabel(commentDisplay), false);
+            JLabel commentLabel = new JLabel("<html><div style='width:300px;'><strong>" + comment.getUserNameFromUserId(comment.getUsercode()) + "</strong>: " + renderStars(comment.getRating()) +
+                    "<br/>" + comment.getText() + "</div></html>");
+            commentsPanel.add(commentLabel);
         });
-
+        JScrollPane scrollPane = new JScrollPane(commentsPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setPreferredSize(new Dimension(180, 100)); // Adjust dimensions as needed
+        card.add(scrollPane);
 
         JButton commentsButton = new JButton("View All Comments");
         commentsButton.addActionListener(e -> showAllComments(film));
@@ -226,12 +238,12 @@ public class FilmDisplay {
         commentsDialog.setVisible(true);
     }
 
-    private void updateCommentPanel(List<Comment> comments, JPanel commentPanel) {
+    protected void updateCommentPanel(List<Comment> comments, JPanel commentPanel) {
         commentPanel.removeAll();
         for (Comment comment : comments) {
             String userName = comment.getUserNameFromUserId(comment.getUsercode());
-            JLabel commentLabel = new JLabel("<html><strong>" + userName + "</strong>: " + renderStars(comment.getRating()) +
-                    "<br/>" + comment.getText() + "<br/><br/></html>");
+            JLabel commentLabel = new JLabel("<html><div style='width:200px;'><strong>" + userName + "</strong>: " + renderStars(comment.getRating()) +
+                    "<br/>" + comment.getText() + "</div></html>");
             commentPanel.add(commentLabel);
         }
         commentPanel.revalidate();
@@ -361,7 +373,7 @@ public class FilmDisplay {
             try {
                 Set<String> filmIds = CartManager.loadCart().get(userId);
                 if (filmIds != null && !filmIds.isEmpty()) {
-                    new CartDisplay(filmIds).setVisible(true);
+                    new CartDisplay(filmIds, filmManager).setVisible(true);
                 } else {
                     JOptionPane.showMessageDialog(frame, "Your cart is empty.");
                 }

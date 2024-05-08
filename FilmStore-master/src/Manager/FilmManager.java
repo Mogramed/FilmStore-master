@@ -1,6 +1,7 @@
 package Manager;
 import Entities.*;
 
+
 import javax.swing.*;
 import java.io.*;
 import java.text.ParseException;
@@ -54,6 +55,17 @@ public class FilmManager {
         return false;
     }
 
+
+    // Method to get a film by its code
+    public Film getFilmById(String filmCode) {
+        for (Film film : films) {
+            if (film.getCode().equals(filmCode)) {
+                return film;
+            }
+        }
+        return null; // Return null if no film matches the given ID
+    }
+
     public List<Film> loadFilms() {
         List<Film> loadedFilms = new ArrayList<>();
         this.films = new ArrayList<>();
@@ -100,41 +112,6 @@ public class FilmManager {
         }
         this.films.addAll(loadedFilms);
         return loadedFilms;
-    }
-
-
-
-    public void displayFilmComments() {
-        List<Film> films = loadFilms();  // Assurez-vous que cette méthode charge aussi les commentaires
-
-        for (Film film : films) {
-            System.out.println("Film: " + film.getTitle());
-            List<Comment> comments = film.getCommentsForFilm(film.getCode());
-
-            for (Comment comment : comments) {
-                System.out.println("   Comment: " + comment.getText() + " - " + renderStars(comment.getRating()));
-            }
-
-            System.out.println();
-        }
-    }
-
-    private String renderStars(String rating) {
-        int intRating;
-        try {
-            intRating = Integer.parseInt(rating);  // Convertit la chaîne en entier
-        } catch (NumberFormatException e) {
-            return "Invalid rating";  // Gère les cas où la chaîne ne peut pas être convertie en entier
-        }
-
-        StringBuilder stars = new StringBuilder();
-        for (int i = 0; i < intRating; i++) {
-            stars.append("★");
-        }
-        for (int i = intRating; i < 5; i++) {
-            stars.append("☆");
-        }
-        return stars.toString();
     }
 
 

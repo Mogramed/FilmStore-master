@@ -1,17 +1,23 @@
 package Services;
 
-import Manager.CartManager;
+import Entities.Film;
+import Manager.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Set;
 
 public class CartDisplay extends JFrame {
     private Set<String> filmIds;
+    private FilmManager filmManager;
 
-    public CartDisplay(Set<String> filmIds) {
+    // Modified constructor to accept FilmManager instance
+    public CartDisplay(Set<String> filmIds, FilmManager filmManager) {
         this.filmIds = filmIds;
+        this.filmManager = filmManager;
         initializeUI();
     }
 
@@ -21,15 +27,16 @@ public class CartDisplay extends JFrame {
         setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        filmIds.forEach(filmId -> {
-            JPanel panel = new JPanel(new FlowLayout());
-            JLabel label = new JLabel(filmId);  // You might want to fetch more details about the film to show here
-            JButton removeButton = new JButton("Remove");
-            removeButton.addActionListener(e -> removeFromCart(filmId));
-            panel.add(label);
-            panel.add(removeButton);
-            add(panel);
-        });
+        if (filmManager != null) {
+            filmIds.forEach(filmId -> {
+                Film film = filmManager.getFilmById(filmId);
+                if (film != null) {
+                    addFilmPanel(film);
+                } else {
+                    System.out.println("Film not found: " + filmId);
+                }
+            });
+        }
 
         JButton clearButton = new JButton("Clear Cart");
         clearButton.addActionListener(e -> clearCart());
@@ -40,13 +47,31 @@ public class CartDisplay extends JFrame {
         add(buyButton);
     }
 
+    private void addFilmPanel(Film film) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel titleLabel = new JLabel(film.getTitle() + " - $" + film.getPrice());
+        ImageIcon imageIcon;
+        try {
+            imageIcon = new ImageIcon(new ImageIcon(new URL(film.getImageURL())).getImage().getScaledInstance(50, 75, Image.SCALE_SMOOTH));
+            JLabel imageLabel = new JLabel(imageIcon);
+            panel.add(imageLabel);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        JButton removeButton = new JButton("Remove");
+        removeButton.addActionListener(e -> removeFromCart(film.getCode()));
+        panel.add(titleLabel);
+        panel.add(removeButton);
+        add(panel);
+    }
+
+
     private void removeFromCart(String filmId) {
         String userId = SessionContext.getCurrentUserId();
         try {
             if (CartManager.removeFromCart(userId, filmId)) {
                 JOptionPane.showMessageDialog(this, "Removed from cart successfully!");
-                this.dispose();  // Close the window or update UI
-                new CartDisplay(CartManager.loadCart().get(userId)).setVisible(true);  // Reopen or refresh the cart display
+                refreshCartDisplay(userId);  // Refresh the display
             } else {
                 JOptionPane.showMessageDialog(this, "Failed to remove from cart.");
             }
@@ -54,6 +79,32 @@ public class CartDisplay extends JFrame {
             e.printStackTrace();
         }
     }
+
+    private void refreshCartDisplay(String userId) throws IOException {
+        Set<String> updatedFilmIds = CartManager.loadCart().get(userId);
+        getContentPane().removeAll(); // Remove all UI components from the content pane
+        if (updatedFilmIds != null) {
+            updatedFilmIds.forEach(filmId -> {
+                Film film = filmManager.getFilmById(filmId);
+                if (film != null) {
+                    addFilmPanel(film);
+                } else {
+                    System.out.println("Film not found: " + filmId);
+                }
+            });
+        } else {
+            System.out.println("Your cart is empty.");
+        }
+        JButton clearButton = new JButton("Clear Cart");
+        clearButton.addActionListener(e -> clearCart());
+        JButton buyButton = new JButton("Buy All");
+        buyButton.addActionListener(e -> buyAll());
+        add(clearButton);
+        add(buyButton);
+        revalidate();
+        repaint();
+    }
+
 
     private void clearCart() {
         String userId = SessionContext.getCurrentUserId();
