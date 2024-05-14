@@ -26,9 +26,6 @@ public class Comment {
         return usercode;
     }
 
-    public String getFilmCode() {
-        return filmcode;
-    }
 
     public String getText() {
         return text;

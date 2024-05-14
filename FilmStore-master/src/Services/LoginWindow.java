@@ -17,6 +17,7 @@ public class LoginWindow extends JFrame {
 
     private static FilmManager filmManager = new FilmManager();
 
+
     public LoginWindow(FilmManager filmManager) {
         super("Login or Sign Up");
         this.filmManager = filmManager;

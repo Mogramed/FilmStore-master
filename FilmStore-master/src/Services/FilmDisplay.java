@@ -48,8 +48,9 @@ public class FilmDisplay {
 
             JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
             JButton accountButton = new JButton("Account");
-            //accountButton.addActionListener(e -> openAccountPage());
+            accountButton.addActionListener(e -> openAccountPage());
             rightPanel.add(accountButton);
+            topPanel.add(rightPanel, BorderLayout.EAST);
         }
 
         refreshButton.setPreferredSize(new Dimension(30, 30));
@@ -385,7 +386,10 @@ public class FilmDisplay {
     }
 
 
-
+    private void openAccountPage() {
+        // Open the account management interface
+        new AccountManagementDialog(frame, SessionContext.getCurrentUser()).setVisible(true);
+    }
 
 
 

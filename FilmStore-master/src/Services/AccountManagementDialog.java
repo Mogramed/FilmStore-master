@@ -1,0 +1,115 @@
+package Services;
+
+import Entities.Comment;
+import Entities.User;
+import Manager.*;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+import javax.swing.*;
+import java.awt.*;
+
+public class AccountManagementDialog extends JDialog {
+    private User user;
+    private JLabel passwordField;
+    private JButton showPasswordButton;
+
+    public AccountManagementDialog(Frame owner, User user) {
+        super(owner, "Account Management", true);
+        this.user = user;
+        setLayout(new BorderLayout());
+
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        addField(infoPanel, "User ID:", new JLabel(user.getId()));
+        addField(infoPanel, "Name:", new JLabel(user.getFirstname() + " " + user.getLastname()));
+        addField(infoPanel, "Email:", new JLabel(user.getEmail()));
+        addField(infoPanel, "Address:", new JLabel(user.getAddress()));
+        addField(infoPanel, "Phone number:", new JLabel(String.valueOf(user.getPhonenumber())));
+
+
+        passwordField = new JLabel(user.getPassword());
+        passwordField.setText("********");
+        addField(infoPanel, "Password:", passwordField);
+
+        showPasswordButton = new JButton("Show Password");
+        showPasswordButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                verifyPassword();
+            }
+        });
+        infoPanel.add(showPasswordButton);
+
+        add(infoPanel, BorderLayout.NORTH);
+
+        JPanel commentPanel = new JPanel();
+        commentPanel.setLayout(new BoxLayout(commentPanel, BoxLayout.Y_AXIS));
+        JScrollPane commentScroll = new JScrollPane(commentPanel);
+        add(commentScroll, BorderLayout.CENTER);
+
+        // Load comments associated with the user
+        List<Comment> comments = CSVManager.getUserComments(user.getId());
+        for (Comment comment : comments) {
+            JPanel commentCard = new JPanel(new BorderLayout());
+            commentCard.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createEmptyBorder(5, 5, 5, 5),
+                    BorderFactory.createLineBorder(Color.GRAY)
+            ));
+            JLabel commentLabel = new JLabel("<html><div style='width:500px;'>" + comment.getFilmcode() + ": " + comment.getText() + "</div></html>");
+            commentLabel.setVerticalAlignment(JLabel.TOP);
+            commentCard.add(commentLabel, BorderLayout.CENTER);
+
+            JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton editButton = new JButton("Edit");
+            editButton.addActionListener(e -> editComment(comment));
+            buttonsPanel.add(editButton);
+
+            JButton deleteButton = new JButton("Delete");
+            deleteButton.addActionListener(e -> deleteComment(comment));
+            buttonsPanel.add(deleteButton);
+
+            commentCard.add(buttonsPanel, BorderLayout.SOUTH);
+            commentPanel.add(commentCard);
+        }
+        pack();
+        setLocationRelativeTo(owner);
+    }
+
+    private void addField(JPanel panel, String labelText, JComponent field) {
+        JPanel fieldPanel = new JPanel(new BorderLayout(5, 5));
+        JLabel label = new JLabel(labelText);
+        label.setPreferredSize(new Dimension(150, 20));
+        fieldPanel.add(label, BorderLayout.WEST);
+        fieldPanel.add(field, BorderLayout.CENTER);
+        panel.add(fieldPanel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+    }
+
+    private void editComment(Comment comment) {
+        // Open a dialog to edit the comment
+        JOptionPane.showMessageDialog(this, "Edit comment feature is not implemented yet.");
+    }
+
+    private void deleteComment(Comment comment) {
+        // Delete the comment
+        int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this comment?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            CSVManager.removeCommentFromFilmAndUser(comment.getFilmcode(), comment.getUsercode(), comment.getRating(), comment.getText());
+            JOptionPane.showMessageDialog(this, "Comment deleted.");
+            dispose(); // Close the dialog
+        }
+    }
+
+    private void verifyPassword() {
+        String enteredPassword = JOptionPane.showInputDialog(this, "Enter your password to confirm:");
+        if (enteredPassword != null && enteredPassword.equals(SessionContext.getCurrentUser().getPassword())) {
+            passwordField.setText(user.getPassword()); // Show password
+            JOptionPane.showMessageDialog(this, "Password visibility enabled.");
+        } else {
+            JOptionPane.showMessageDialog(this, "Incorrect password.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}

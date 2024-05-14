@@ -383,6 +383,31 @@ public class CSVManager {
     }
 
 
+    public static List<Comment> getUserComments(String userId) {
+        File file = new File(USER_CSV_FILE_PATH);
+        List<Comment> comments = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";", -1);
+                if (parts[0].equals(userId) && parts.length > 8 && !parts[8].isEmpty()) {
+                    String[] commentEntries = parts[8].split("\\|");
+                    for (String entry : commentEntries) {
+                        String[] details = entry.split(",", 3);
+                        if (details.length == 3) {
+                            comments.add(new Comment(details[0].trim(), details[1].trim(), userId, details[2].trim()));
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return comments;
+    }
+
+
+
     public static boolean deleteFilmFromCSV(String filmCode) {
         File file = new File(FILM_CSV_FILE_PATH);
         List<String> lines = new ArrayList<>();
