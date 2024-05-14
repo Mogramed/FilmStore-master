@@ -97,11 +97,17 @@ public class AccountManagementDialog extends JDialog {
         // Delete the comment
         int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this comment?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
-            CSVManager.removeCommentFromFilmAndUser(comment.getFilmcode(), comment.getUsercode(), comment.getRating(), comment.getText());
-            JOptionPane.showMessageDialog(this, "Comment deleted.");
-            dispose(); // Close the dialog
+            boolean success = CSVManager.removeCommentFromFilmAndUser(comment.getUsercode(), comment.getFilmcode(), comment.getRating(), comment.getText());
+            System.out.println(comment.getFilmcode()+" et " + comment.getUsercode()+ comment.getRating()+ comment.getText());
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Comment deleted.");
+                dispose(); // Close the dialog
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to delete comment.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
+
 
     private void verifyPassword() {
         String enteredPassword = JOptionPane.showInputDialog(this, "Enter your password to confirm:");
