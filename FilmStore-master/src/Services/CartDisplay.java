@@ -42,14 +42,17 @@ public class CartDisplay extends JFrame {
         clearButton.addActionListener(e -> clearCart());
         JButton buyButton = new JButton("Buy All");
         buyButton.addActionListener(e -> buyAll());
+        JButton subscribeButton = new JButton(SessionContext.isSubscribed() ? "Se Désabonner" : "S'abonner");
+        subscribeButton.addActionListener(e -> toggleSubscription(subscribeButton));
 
         add(clearButton);
         add(buyButton);
+        add(subscribeButton);
     }
 
     private void addFilmPanel(Film film) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel titleLabel = new JLabel(film.getTitle() + " - $" + film.getPrice());
+        JLabel titleLabel = new JLabel(film.getTitle() + " - $" + getPriceWithDiscount(film.getPrice()));
         ImageIcon imageIcon;
         try {
             imageIcon = new ImageIcon(new ImageIcon(new URL(film.getImageURL())).getImage().getScaledInstance(50, 75, Image.SCALE_SMOOTH));
@@ -65,6 +68,13 @@ public class CartDisplay extends JFrame {
         add(panel);
     }
 
+    private String getPriceWithDiscount(String originalPrice) {
+        double price = Double.parseDouble(originalPrice);
+        if (SessionContext.isSubscribed()) {
+            price -= 2;
+        }
+        return String.format("%.2f", price);
+    }
 
     private void removeFromCart(String filmId) {
         String userId = SessionContext.getCurrentUserId();
@@ -99,12 +109,26 @@ public class CartDisplay extends JFrame {
         clearButton.addActionListener(e -> clearCart());
         JButton buyButton = new JButton("Buy All");
         buyButton.addActionListener(e -> buyAll());
+        JButton subscribeButton = new JButton(SessionContext.isSubscribed() ? "Se Désabonner" : "S'abonner");
+        subscribeButton.addActionListener(e -> toggleSubscription(subscribeButton));
         add(clearButton);
         add(buyButton);
+        add(subscribeButton);
         revalidate();
         repaint();
     }
 
+    private void toggleSubscription(JButton subscribeButton) {
+        boolean currentSubscriptionStatus = SessionContext.isSubscribed();
+        SessionContext.setSubscribed(!currentSubscriptionStatus);
+        CSVManager.setUserSubscribed(SessionContext.getCurrentUserId(), !currentSubscriptionStatus);
+        subscribeButton.setText(!currentSubscriptionStatus ? "Se Désabonner" : "S'abonner");
+        try {
+            refreshCartDisplay(SessionContext.getCurrentUserId());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void clearCart() {
         String userId = SessionContext.getCurrentUserId();
@@ -122,4 +146,3 @@ public class CartDisplay extends JFrame {
         // Implement purchasing logic
     }
 }
-

@@ -9,19 +9,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FilmDisplay {
-    private static final String COMMENTS_STATE_FILE_PATH = "./FilmStore-master/src/CSVBase/commentsEnabledState.csv";
     protected JFrame frame;
     private FilmManager filmManager;
     protected JPanel filmPanel;
     protected Map<String, Boolean> commentsEnabledMap;
+
+    private static final String COMMENTS_STATE_FILE_PATH = "./FilmStore-master/src/CSVBase/commentsEnabledState.csv";
 
     public FilmDisplay(FilmManager filmManager) {
         this.filmManager = filmManager;
@@ -47,7 +45,7 @@ public class FilmDisplay {
             topPanel.add(newFilmButton);
         }
 
-        if (!SessionContext.isUserAdmin()) {
+        if (!SessionContext.isUserAdmin() && !SessionContext.isGuestUser()) {
             JButton viewCartButton = new JButton("View Cart");
             viewCartButton.addActionListener(e -> viewCart());  // Add an ActionListener to open the cart view
             topPanel.add(viewCartButton);
@@ -58,6 +56,15 @@ public class FilmDisplay {
             rightPanel.add(accountButton);
             topPanel.add(rightPanel, BorderLayout.EAST);
         }
+        JButton loginButton = new JButton(SessionContext.isGuestUser() ? "Connect " : "Disconnect ");
+        loginButton.addActionListener(e -> {
+            if (SessionContext.isGuestUser()) {
+                openLoginWindow();
+            } else {
+                logout();
+            }
+        });
+        topPanel.add(loginButton);
 
         refreshButton.setPreferredSize(new Dimension(30, 30));
         refreshButton.addActionListener(e -> refreshFilmDisplay());
@@ -80,6 +87,38 @@ public class FilmDisplay {
         refreshFilmDisplay();
     }
 
+    private void logout() {
+        // Réinitialiser l'état de l'utilisateur
+        SessionContext.setCurrentUser(null);
+        SessionContext.setGuestUser(true);
+        // Réinitialiser l'interface utilisateur
+        new LoginWindow(filmManager);
+        frame.dispose();
+    }
+
+    protected void saveCommentsEnabledState() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(COMMENTS_STATE_FILE_PATH))) {
+            for (Map.Entry<String, Boolean> entry : commentsEnabledMap.entrySet()) {
+                writer.println(entry.getKey() + "," + entry.getValue());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void loadCommentsEnabledState() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(COMMENTS_STATE_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    commentsEnabledMap.put(parts[0], Boolean.parseBoolean(parts[1]));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     JPanel createFilmCard(Film film) {
         JPanel card = new JPanel();
@@ -94,8 +133,11 @@ public class FilmDisplay {
         addToCard(card, new JLabel("Title: " + film.getTitle()), true);
         addToCard(card, new JLabel("Year: " + film.getProductionYear()), false);
         addToCard(card, new JLabel("Director: " + String.join(", ", film.getDirector())), false);
-        addToCard(card, new JLabel("Price: $" + film.getPrice()), true);
-
+        if (!SessionContext.isUserAdmin() && !SessionContext.isGuestUser()) {
+            addToCard(card, new JLabel("Price: $" + getPriceWithDiscount(film.getPrice())), true);
+        }else {
+            addToCard(card, new JLabel("Price: $" + film.getPrice()), true);
+        }
         // Calculate and display average rating
         double averageRating = calculateAverageRating(film.getCommentsForFilm(film.getCode()));
         JLabel ratingLabel = new JLabel(String.format("Average Rating: %.1f", averageRating));
@@ -120,15 +162,17 @@ public class FilmDisplay {
                 scrollPane.setPreferredSize(new Dimension(180, 100)); // Adjust dimensions as needed
                 card.add(scrollPane);
 
-                JButton commentsButton = new JButton("View All Comments");
-                commentsButton.addActionListener(e -> showAllComments(film));
-                card.add(commentsButton);
+                if (!SessionContext.isGuestUser()) {
+                    JButton commentsButton = new JButton("View All Comments");
+                    commentsButton.addActionListener(e -> showAllComments(film));
+                    card.add(commentsButton);
+                }
             } else {
                 JLabel noCommentsLabel = new JLabel("No comments available.");
                 card.add(noCommentsLabel);
             }
 
-            if (!SessionContext.isUserAdmin()) {
+            if (!SessionContext.isUserAdmin() && !SessionContext.isGuestUser()) {
                 JButton addCommentButton = new JButton("Add Comment");
                 addCommentButton.addActionListener(e -> addComment(film));
                 card.add(createButtonPanel(addCommentButton));
@@ -139,7 +183,7 @@ public class FilmDisplay {
         }
 
         JButton detailsButton = new JButton("Details");
-        if (!SessionContext.isUserAdmin()) {
+        if (!SessionContext.isUserAdmin() && !SessionContext.isGuestUser()) {
             JButton addToCartButton = new JButton("Add to Cart");
             card.add(createButtonPanel(addToCartButton));
             addToCartButton.addActionListener(e -> addToCart(film));
@@ -151,6 +195,15 @@ public class FilmDisplay {
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         return card;
+    }
+
+    private String getPriceWithDiscount(String originalPrice) {
+        System.out.println("Attempting to parse price in FilmDisplay: " + originalPrice); // Ajoutez cette ligne
+        double price = Double.parseDouble(originalPrice);
+        if (SessionContext.isSubscribed()) {
+            price -= 2;
+        }
+        return String.format("%.2f", price);
     }
 
     protected String renderStars(String ratingStr) {
@@ -335,7 +388,7 @@ public class FilmDisplay {
         List<Film> updatedFilms = filmManager.loadFilms();
 
         for (Film film : updatedFilms) {
-            commentsEnabledMap.putIfAbsent(film.getCode(), true);  // Ensure every film has an entry in commentsEnabledMap
+            commentsEnabledMap.putIfAbsent(film.getCode(), true);  // Ensure every film has an entry
             filmPanel.add(createFilmCard(film));
         }
         filmPanel.revalidate();
@@ -375,7 +428,6 @@ public class FilmDisplay {
 
     private void viewCart() {
         String userId = SessionContext.getCurrentUserId();
-        System.out.println(userId);
         if (userId != null) {
             try {
                 Set<String> filmIds = CartManager.loadCart().get(userId);
@@ -391,30 +443,11 @@ public class FilmDisplay {
         }
     }
 
-    protected void saveCommentsEnabledState() {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(COMMENTS_STATE_FILE_PATH))) {
-            for (Map.Entry<String, Boolean> entry : commentsEnabledMap.entrySet()) {
-                writer.println(entry.getKey() + "," + entry.getValue());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void openLoginWindow() {
+        // Open the login window
+        new LoginWindow(filmManager);
+        frame.dispose();
     }
-
-    protected void loadCommentsEnabledState() {
-        try (BufferedReader reader = new BufferedReader(new FileReader(COMMENTS_STATE_FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    commentsEnabledMap.put(parts[0], Boolean.parseBoolean(parts[1]));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 
     private void openAccountPage() {
         // Open the account management interface

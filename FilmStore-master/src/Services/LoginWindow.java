@@ -12,11 +12,11 @@ import java.awt.*;
 public class LoginWindow extends JFrame {
     private JButton adminLoginButton;
     private JButton userLoginButton;
+    private JButton guestLoginButton;
     private JButton createAccountButton;
     private static final String ADMIN_TOKEN = "mabelle";
 
     private static FilmManager filmManager = new FilmManager();
-
 
     public LoginWindow(FilmManager filmManager) {
         super("Login or Sign Up");
@@ -33,14 +33,17 @@ public class LoginWindow extends JFrame {
 
         adminLoginButton = new JButton("Login as Admin");
         userLoginButton = new JButton("Login as User");
+        guestLoginButton = new JButton("Login as Guest");
         createAccountButton = new JButton("Sign Up");
 
         adminLoginButton.addActionListener(e -> showLoginDialog(true));
         userLoginButton.addActionListener(e -> showLoginDialog(false));
+        guestLoginButton.addActionListener(e -> loginAsGuest());
         createAccountButton.addActionListener(e -> showSignUpDialog());
 
         add(adminLoginButton);
         add(userLoginButton);
+        add(guestLoginButton);
         add(createAccountButton);
     }
 
@@ -115,6 +118,12 @@ public class LoginWindow extends JFrame {
         loginDialog.setVisible(true);
     }
 
+    private void loginAsGuest() {
+        SessionContext.setGuestUser(true);
+        SwingUtilities.invokeLater(() -> new FilmDisplay(filmManager));
+        dispose();
+    }
+
 
     private void showSignUpDialog() {
         JDialog signUpDialog = new JDialog(this, "Sign Up", true);
@@ -158,7 +167,6 @@ public class LoginWindow extends JFrame {
             gbc.gridx = 1;
             signUpDialog.add(pair[1], gbc);
             gridY++;
-
         }
 
         // Add account type radios

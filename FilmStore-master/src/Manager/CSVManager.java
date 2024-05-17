@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class CSVManager {
     private static final String USER_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/users.csv";
-    private static final String ADMIN_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/admins.csv";
+    private static final String SUBSCRIPTION_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/subscriptions.csv";
     private static final String FILM_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/films.csv";
 
 
@@ -556,4 +556,49 @@ public class CSVManager {
         return found;
     }
 
+    public static boolean isUserSubscribed(String userId) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(SUBSCRIPTION_CSV_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().equals(userId)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static void setUserSubscribed(String userId, boolean subscribed) {
+        List<String> lines = new ArrayList<>();
+        boolean found = false;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(SUBSCRIPTION_CSV_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().equals(userId)) {
+                    found = true;
+                    if (!subscribed) {
+                        continue; // Skip the line to remove subscription
+                    }
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (subscribed && !found) {
+            lines.add(userId); // Add subscription
+        }
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(SUBSCRIPTION_CSV_FILE_PATH, false))) {
+            for (String line : lines) {
+                writer.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

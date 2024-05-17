@@ -50,6 +50,19 @@ public class AccountManagementDialog extends JDialog {
         JScrollPane commentScroll = new JScrollPane(commentPanel);
         add(commentScroll, BorderLayout.CENTER);
 
+        boolean isSubscribed = CSVManager.isUserSubscribed(user.getId());
+        SessionContext.setSubscribed(isSubscribed);
+        JButton subscribeButton = new JButton(isSubscribed ? "Se Désabonner" : "S'abonner");
+        subscribeButton.addActionListener(e -> {
+            boolean currentSubscriptionStatus = SessionContext.isSubscribed();
+            SessionContext.setSubscribed(!currentSubscriptionStatus);
+            CSVManager.setUserSubscribed(user.getId(), !currentSubscriptionStatus);
+            subscribeButton.setText(!currentSubscriptionStatus ? "Se Désabonner" : "S'abonner");
+        });
+        infoPanel.add(subscribeButton);
+
+        add(infoPanel, BorderLayout.NORTH);
+
         // Load comments associated with the user
         List<Comment> comments = CSVManager.getUserComments(user.getId());
         for (Comment comment : comments) {
