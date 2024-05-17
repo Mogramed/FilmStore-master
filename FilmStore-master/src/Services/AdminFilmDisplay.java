@@ -1,25 +1,29 @@
 package Services;
 
-
-import Entities.*;
-import Manager.*;
+import Entities.Comment;
+import Entities.Film;
+import Manager.CSVManager;
+import Manager.FilmDetailsForm;
+import Manager.FilmManager;
 import javax.swing.*;
 import java.awt.*;
+import java.io.*;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
 
 public class AdminFilmDisplay extends FilmDisplay {
     private FilmManager filmManager;
+    private static final String COMMENTS_STATE_FILE_PATH = "./FilmStore-master/src/CSVBase/commentsEnabledState.csv";
+
 
     public AdminFilmDisplay(FilmManager filmManager) {
         super(filmManager);
         this.filmManager = filmManager;
-
     }
-
 
     @Override
     protected JPanel createFilmCard(Film film) {
@@ -28,9 +32,22 @@ public class AdminFilmDisplay extends FilmDisplay {
         // Ajout de boutons spécifiques à l'administration pour chaque film
         JButton modifyButton = new JButton("Modifier");
         modifyButton.addActionListener(e -> modifyFilm(film));
+
+        boolean areCommentsEnabled = commentsEnabledMap.getOrDefault(film.getCode(), true);
+        JButton toggleCommentsButton = new JButton(areCommentsEnabled ? "Désactiver Commentaires" : "Activer Commentaires");
+        toggleCommentsButton.addActionListener(e -> {
+            boolean currentState = commentsEnabledMap.getOrDefault(film.getCode(), true);
+            commentsEnabledMap.put(film.getCode(), !currentState);
+            toggleCommentsButton.setText(!currentState ? "Désactiver Commentaires" : "Activer Commentaires");
+            saveCommentsEnabledState();
+            refreshFilmDisplay();
+        });
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(modifyButton);
+        buttonPanel.add(toggleCommentsButton); // Ajout du bouton de désactivation/activation des commentaires
         card.add(buttonPanel, BorderLayout.PAGE_END);
+
         return card;
     }
 
@@ -50,6 +67,31 @@ public class AdminFilmDisplay extends FilmDisplay {
         }
     }
 
+    @Override
+    protected void saveCommentsEnabledState() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(COMMENTS_STATE_FILE_PATH))) {
+            for (Map.Entry<String, Boolean> entry : commentsEnabledMap.entrySet()) {
+                writer.println(entry.getKey() + "," + entry.getValue());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void loadCommentsEnabledState() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(COMMENTS_STATE_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    commentsEnabledMap.put(parts[0], Boolean.parseBoolean(parts[1]));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void showAllComments(Film film) {
@@ -100,7 +142,6 @@ public class AdminFilmDisplay extends FilmDisplay {
         commentsDialog.setVisible(true);
     }
 
-
     private void setCommentSortingActions(JButton sortButton, JButton positiveCommentsButton, JButton negativeCommentsButton, List<Comment> comments, JPanel commentPanel, Film film, JDialog commentsDialog) {
         sortButton.addActionListener(e -> {
             comments.sort((c1, c2) -> Integer.compare(Integer.parseInt(c2.getRating()), Integer.parseInt(c1.getRating())));
@@ -117,7 +158,6 @@ public class AdminFilmDisplay extends FilmDisplay {
             refreshCommentsDisplay(filtered, commentPanel, film, commentsDialog);
         });
     }
-
 
     private void refreshCommentsDisplay(List<Comment> comments, JPanel commentPanel, Film film, JDialog commentsDialog) {
         commentPanel.removeAll();  // Clear existing components
@@ -140,8 +180,6 @@ public class AdminFilmDisplay extends FilmDisplay {
         commentPanel.repaint();
     }
 
-
-
     private void removeComment(Film film, String userId, String commentText, String rating) {
         boolean success = CSVManager.removeCommentFromFilmAndUser(film.getCode(), userId, rating, commentText);
         if (success) {
@@ -151,5 +189,4 @@ public class AdminFilmDisplay extends FilmDisplay {
             JOptionPane.showMessageDialog(frame, "Failed to remove comment.");
         }
     }
-
 }

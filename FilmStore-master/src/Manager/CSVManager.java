@@ -444,6 +444,116 @@ public class CSVManager {
     }
 
 
+    public static boolean editCommentInFilmAndUser(String filmCode, String userId, String oldRating, String oldCommentText, String newRating, String newCommentText) {
+        boolean filmEdited = editCommentInFilm(filmCode, userId, oldRating, oldCommentText, newRating, newCommentText);
+        boolean userEdited = editCommentInUser(userId, filmCode, oldRating, oldCommentText, newRating, newCommentText);
+        return filmEdited && userEdited;
+    }
 
+
+    public static boolean editCommentInFilm(String filmCode, String userId, String oldRating, String oldCommentText, String newRating, String newCommentText) {
+        File file = new File(FILM_CSV_FILE_PATH);
+        List<String> lines = new ArrayList<>();
+        boolean found = false;
+        String targetCommentEntry = (oldCommentText.trim() + "," + oldRating.trim() + "," + userId.trim()).toLowerCase();
+        String newCommentEntry = newCommentText.trim() + "," + newRating.trim() + "," + userId.trim();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.toLowerCase().startsWith(filmCode.toLowerCase() + ";")) {
+                    String[] parts = line.split(";", -1);
+                    if (parts.length > 12 && !parts[12].isEmpty()) {
+                        List<String> comments = Arrays.stream(parts[12].split("\\|"))
+                                .map(String::trim)
+                                .collect(Collectors.toList());
+                        boolean edited = false;
+                        for (int i = 0; i < comments.size(); i++) {
+                            System.out.println("Checking comment: " + comments.get(i).toLowerCase());
+                            if (comments.get(i).toLowerCase().equals(targetCommentEntry)) {
+                                comments.set(i, newCommentEntry);
+                                edited = true;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (edited) {
+                            parts[12] = String.join("|", comments);
+                            line = String.join(";", parts);
+                        }
+                    }
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        if (found) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(file, false))) {
+                for (String modifiedLine : lines) {
+                    writer.println(modifiedLine);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return found;
+    }
+
+
+
+
+    public static boolean editCommentInUser(String userId, String filmCode, String oldRating, String oldCommentText, String newRating, String newCommentText) {
+        File file = new File(USER_CSV_FILE_PATH);
+        List<String> lines = new ArrayList<>();
+        boolean found = false;
+        String targetCommentEntry = (oldCommentText.trim() + "," + oldRating.trim() + "," + filmCode.trim()).toLowerCase();
+        String newCommentEntry = newCommentText.trim() + "," + newRating.trim() + "," + filmCode.trim();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.toLowerCase().startsWith(userId.toLowerCase() + ";")) {
+                    String[] parts = line.split(";", -1);
+                    if (parts.length > 8 && !parts[8].isEmpty()) {
+                        List<String> comments = Arrays.stream(parts[8].split("\\|"))
+                                .map(String::trim)
+                                .collect(Collectors.toList());
+                        boolean edited = false;
+                        for (int i = 0; i < comments.size(); i++) {
+                            System.out.println("Checking comment: " + comments.get(i).toLowerCase());
+                            if (comments.get(i).toLowerCase().equals(targetCommentEntry)) {
+                                comments.set(i, newCommentEntry);
+                                edited = true;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (edited) {
+                            parts[8] = String.join("|", comments);
+                            line = String.join(";", parts);
+                        }
+                    }
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        if (found) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(file, false))) {
+                for (String modifiedLine : lines) {
+                    writer.println(modifiedLine);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return found;
+    }
 
 }

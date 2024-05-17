@@ -90,8 +90,33 @@ public class AccountManagementDialog extends JDialog {
 
     private void editComment(Comment comment) {
         // Open a dialog to edit the comment
-        JOptionPane.showMessageDialog(this, "Edit comment feature is not implemented yet.");
+        JTextField commentField = new JTextField(comment.getText());
+        JTextField ratingField = new JTextField(comment.getRating());
+
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        panel.add(new JLabel("Comment:"));
+        panel.add(commentField);
+        panel.add(new JLabel("Rating:"));
+        panel.add(ratingField);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Edit Comment", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            String newCommentText = commentField.getText().trim();
+            String newRating = ratingField.getText().trim();
+
+            if (!newCommentText.isEmpty() && !newRating.isEmpty()) {
+                boolean success = CSVManager.editCommentInFilmAndUser(comment.getUsercode(), comment.getFilmcode(), comment.getRating(), comment.getText(), newRating, newCommentText);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Comment updated successfully.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to update comment.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Comment and rating cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
+
 
     private void deleteComment(Comment comment) {
         // Delete the comment

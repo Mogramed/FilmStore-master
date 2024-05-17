@@ -7,20 +7,26 @@ import Manager.CartManager;
 import Manager.FilmManager;
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FilmDisplay {
+    private static final String COMMENTS_STATE_FILE_PATH = "./FilmStore-master/src/CSVBase/commentsEnabledState.csv";
     protected JFrame frame;
     private FilmManager filmManager;
     protected JPanel filmPanel;
+    protected Map<String, Boolean> commentsEnabledMap;
 
     public FilmDisplay(FilmManager filmManager) {
         this.filmManager = filmManager;
+        this.commentsEnabledMap = new HashMap<>();
+        loadCommentsEnabledState(); // Charger l'état des commentaires activés/désactivés
         initializeUI();
     }
 
@@ -41,7 +47,7 @@ public class FilmDisplay {
             topPanel.add(newFilmButton);
         }
 
-        if (SessionContext.isUserAdmin() == false) {
+        if (!SessionContext.isUserAdmin()) {
             JButton viewCartButton = new JButton("View Cart");
             viewCartButton.addActionListener(e -> viewCart());  // Add an ActionListener to open the cart view
             topPanel.add(viewCartButton);
@@ -57,12 +63,14 @@ public class FilmDisplay {
         refreshButton.addActionListener(e -> refreshFilmDisplay());
         topPanel.add(refreshButton);
 
-
         frame.add(topPanel, BorderLayout.NORTH);
         filmPanel.setLayout(new WrapLayout(FlowLayout.LEFT));
 
         List<Film> films = filmManager.getFilms();
-        films.forEach(film -> filmPanel.add(createFilmCard(film)));
+        films.forEach(film -> {
+            commentsEnabledMap.putIfAbsent(film.getCode(), true);  // Initialize commentsEnabled for each film
+            filmPanel.add(createFilmCard(film));
+        });
 
         JScrollPane scrollPane = new JScrollPane(filmPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -71,8 +79,6 @@ public class FilmDisplay {
 
         refreshFilmDisplay();
     }
-
-
 
 
     JPanel createFilmCard(Film film) {
@@ -95,32 +101,45 @@ public class FilmDisplay {
         JLabel ratingLabel = new JLabel(String.format("Average Rating: %.1f", averageRating));
         addToCard(card, ratingLabel, true);
 
-        // Display up to three comments
-        List<Comment> comments = film.getCommentsForFilm(film.getCode());
-        JPanel commentsPanel = new JPanel();
-        commentsPanel.setLayout(new BoxLayout(commentsPanel, BoxLayout.Y_AXIS));
-        // Limit to 3 comments view
-        comments.stream().limit(3).forEach(comment -> {
-            JLabel commentLabel = new JLabel("<html><div style='width:300px;'><strong>" + comment.getUserNameFromUserId(comment.getUsercode()) + "</strong>: " + renderStars(comment.getRating()) +
-                    "<br/>" + comment.getText() + "</div></html>");
-            commentsPanel.add(commentLabel);
-        });
-        JScrollPane scrollPane = new JScrollPane(commentsPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setPreferredSize(new Dimension(180, 100)); // Adjust dimensions as needed
-        card.add(scrollPane);
+        // Check if comments are enabled for this film
+        Boolean commentsEnabled = commentsEnabledMap.get(film.getCode());
+        if (commentsEnabled != null && commentsEnabled) {
+            // Display up to three comments
+            List<Comment> comments = film.getCommentsForFilm(film.getCode());
+            if (comments != null && !comments.isEmpty()) {
+                JPanel commentsPanel = new JPanel();
+                commentsPanel.setLayout(new BoxLayout(commentsPanel, BoxLayout.Y_AXIS));
+                // Limit to 3 comments view
+                comments.stream().limit(3).forEach(comment -> {
+                    JLabel commentLabel = new JLabel("<html><div style='width:300px;'><strong>" + comment.getUserNameFromUserId(comment.getUsercode()) + "</strong>: " + renderStars(comment.getRating()) +
+                            "<br/>" + comment.getText() + "</div></html>");
+                    commentsPanel.add(commentLabel);
+                });
+                JScrollPane scrollPane = new JScrollPane(commentsPanel);
+                scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+                scrollPane.setPreferredSize(new Dimension(180, 100)); // Adjust dimensions as needed
+                card.add(scrollPane);
 
-        JButton commentsButton = new JButton("View All Comments");
-        commentsButton.addActionListener(e -> showAllComments(film));
-        card.add(commentsButton);
+                JButton commentsButton = new JButton("View All Comments");
+                commentsButton.addActionListener(e -> showAllComments(film));
+                card.add(commentsButton);
+            } else {
+                JLabel noCommentsLabel = new JLabel("No comments available.");
+                card.add(noCommentsLabel);
+            }
 
-        if (SessionContext.isUserAdmin() == false) {
-            JButton addCommentButton = new JButton("Add Comment");
-            addCommentButton.addActionListener(e -> addComment(film));
-            card.add(createButtonPanel(addCommentButton));
+            if (!SessionContext.isUserAdmin()) {
+                JButton addCommentButton = new JButton("Add Comment");
+                addCommentButton.addActionListener(e -> addComment(film));
+                card.add(createButtonPanel(addCommentButton));
+            }
+        } else {
+            JLabel commentsDisabledLabel = new JLabel("Comments are disabled for this film.");
+            card.add(commentsDisabledLabel);
         }
+
         JButton detailsButton = new JButton("Details");
-        if (SessionContext.isUserAdmin() == false) {
+        if (!SessionContext.isUserAdmin()) {
             JButton addToCartButton = new JButton("Add to Cart");
             card.add(createButtonPanel(addToCartButton));
             addToCartButton.addActionListener(e -> addToCart(film));
@@ -129,13 +148,10 @@ public class FilmDisplay {
 
         detailsButton.addActionListener(e -> showFilmDetails(film));
 
-
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         return card;
     }
-
-
 
     protected String renderStars(String ratingStr) {
         int rating;
@@ -156,8 +172,6 @@ public class FilmDisplay {
         return stars.toString();
     }
 
-
-
     private void addComment(Film film) {
         String commentText = JOptionPane.showInputDialog(frame, "Enter your comment:");
         if (commentText != null && !commentText.isEmpty()) {
@@ -173,7 +187,6 @@ public class FilmDisplay {
             }
         }
     }
-
 
     private String askForRating() {
         Object[] options = {"1", "2", "3", "4", "5"};
@@ -192,7 +205,6 @@ public class FilmDisplay {
 
         return String.valueOf(selectedIndex + 1);  // Retourne la note sélectionnée (1-5)
     }
-
 
     // Afficher tous les commentaires
     protected void showAllComments(Film film) {
@@ -251,7 +263,6 @@ public class FilmDisplay {
         commentPanel.repaint();
     }
 
-
     private JLabel createImageLabel(String imageUrl) {
         JLabel imageLabel = new JLabel();
         try {
@@ -286,7 +297,6 @@ public class FilmDisplay {
         return buttonPanel;
     }
 
-
     private void showFilmDetails(Film film) {
         JDialog detailsDialog = new JDialog(frame, "Film Details", true);
         detailsDialog.setLayout(new BorderLayout());
@@ -306,7 +316,6 @@ public class FilmDisplay {
         detailsPanel.add(new JLabel("Duration: " + film.getDurationMinutes()));
         detailsPanel.add(new JLabel("Description: " + film.getDescription()));
 
-
         JScrollPane scrollPane = new JScrollPane(detailsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         detailsDialog.add(scrollPane, BorderLayout.CENTER);
 
@@ -319,8 +328,6 @@ public class FilmDisplay {
         detailsDialog.setVisible(true);
     }
 
-
-
     public void refreshFilmDisplay() {
         filmPanel.removeAll();
 
@@ -328,12 +335,12 @@ public class FilmDisplay {
         List<Film> updatedFilms = filmManager.loadFilms();
 
         for (Film film : updatedFilms) {
+            commentsEnabledMap.putIfAbsent(film.getCode(), true);  // Ensure every film has an entry in commentsEnabledMap
             filmPanel.add(createFilmCard(film));
         }
         filmPanel.revalidate();
         filmPanel.repaint();
     }
-
 
     private double calculateAverageRating(List<Comment> comments) {
         if (comments.isEmpty()) {
@@ -349,7 +356,6 @@ public class FilmDisplay {
         }
         return sum / comments.size();
     }
-
 
     private void addToCart(Film film) {
         String userId = SessionContext.getCurrentUserId();
@@ -385,13 +391,33 @@ public class FilmDisplay {
         }
     }
 
+    protected void saveCommentsEnabledState() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(COMMENTS_STATE_FILE_PATH))) {
+            for (Map.Entry<String, Boolean> entry : commentsEnabledMap.entrySet()) {
+                writer.println(entry.getKey() + "," + entry.getValue());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void loadCommentsEnabledState() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(COMMENTS_STATE_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    commentsEnabledMap.put(parts[0], Boolean.parseBoolean(parts[1]));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void openAccountPage() {
         // Open the account management interface
         new AccountManagementDialog(frame, SessionContext.getCurrentUser()).setVisible(true);
     }
-
-
-
-
 }
