@@ -3,16 +3,15 @@ package Services;
 import Entities.Comment;
 import Entities.Film;
 import Manager.CSVManager;
+import Manager.CartManager;
 import Manager.FilmDetailsForm;
 import Manager.FilmManager;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class AdminFilmDisplay extends FilmDisplay {
@@ -32,9 +31,7 @@ public class AdminFilmDisplay extends FilmDisplay {
         // Ajout de boutons spécifiques à l'administration pour chaque film
         JButton modifyButton = new JButton("Modifier");
         modifyButton.addActionListener(e -> modifyFilm(film));
-
-        boolean areCommentsEnabled = commentsEnabledMap.getOrDefault(film.getCode(), true);
-        JButton toggleCommentsButton = new JButton(areCommentsEnabled ? "Désactiver Commentaires" : "Activer Commentaires");
+        JButton toggleCommentsButton = new JButton(commentsEnabledMap.getOrDefault(film.getCode(), true) ? "Désactiver Commentaires" : "Activer Commentaires");
         toggleCommentsButton.addActionListener(e -> {
             boolean currentState = commentsEnabledMap.getOrDefault(film.getCode(), true);
             commentsEnabledMap.put(film.getCode(), !currentState);
@@ -43,13 +40,19 @@ public class AdminFilmDisplay extends FilmDisplay {
             refreshFilmDisplay();
         });
 
+        // Bouton pour générer les statistiques
+        JButton statsButton = new JButton("Generate Statistics");
+        statsButton.addActionListener(e -> generateStatistics(film));
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(modifyButton);
-        buttonPanel.add(toggleCommentsButton); // Ajout du bouton de désactivation/activation des commentaires
+        buttonPanel.add(toggleCommentsButton);
+        buttonPanel.add(statsButton); // Ajouter le bouton de statistiques
         card.add(buttonPanel, BorderLayout.PAGE_END);
 
         return card;
     }
+
 
     private void modifyFilm(Film film) {
         FilmDetailsForm form = new FilmDetailsForm(film);
@@ -189,4 +192,154 @@ public class AdminFilmDisplay extends FilmDisplay {
             JOptionPane.showMessageDialog(frame, "Failed to remove comment.");
         }
     }
+
+    private void generateStatistics(Film film) {
+        JDialog statsDialog = new JDialog(frame, "Statistics for " + film.getTitle(), true);
+        statsDialog.setLayout(new BorderLayout());
+        statsDialog.setSize(500, 400);
+        statsDialog.setLocationRelativeTo(frame);
+
+        JPanel statsPanel = new JPanel();
+        statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
+        statsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        List<Comment> comments = film.getCommentsForFilm(film.getCode());
+        double averageRating = calculateAverageRating(comments);
+        int numberOfPurchases = calculateNumberOfPurchases(film.getCode());
+        int numberOfComments = comments.size();
+        int positiveComments = countPositiveComments(comments);
+        int negativeComments = countNegativeComments(comments);
+        double totalRevenue = calculateTotalRevenue(film.getCode(), film.getPrice());
+        int addedToCartCount = calculateAddedToCartCount(film.getCode());
+        int numberOfViews = calculateNumberOfViews(film.getCode());  // hypothetical if you have this data
+        double averageCommentLength = calculateAverageCommentLength(comments);
+        double positiveCommentPercentage = calculatePositiveCommentPercentage(positiveComments, numberOfComments);
+
+        addStatistic(statsPanel, "Average Rating", String.format("%.2f", averageRating));
+        addStatistic(statsPanel, "Number of Purchases", String.valueOf(numberOfPurchases));
+        addStatistic(statsPanel, "Number of Comments", String.valueOf(numberOfComments));
+        addStatistic(statsPanel, "Positive Comments", String.valueOf(positiveComments));
+        addStatistic(statsPanel, "Negative Comments", String.valueOf(negativeComments));
+        addStatistic(statsPanel, "Total Revenue", String.format("$%.2f", totalRevenue));
+        addStatistic(statsPanel, "Added to Cart", String.valueOf(addedToCartCount));
+        addStatistic(statsPanel, "Number of Views", String.valueOf(numberOfViews));
+        addStatistic(statsPanel, "Average Comment Length", String.format("%.2f words", averageCommentLength));
+        addStatistic(statsPanel, "Positive Comment Percentage", String.format("%.2f%%", positiveCommentPercentage));
+
+        statsDialog.add(statsPanel, BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("Close");
+        closeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        closeButton.addActionListener(e -> statsDialog.dispose());
+        statsDialog.add(closeButton, BorderLayout.SOUTH);
+
+        statsDialog.setVisible(true);
+    }
+
+
+    private int calculateNumberOfPurchases(String filmCode) {
+        // Calculer le nombre d'achats pour ce film
+        // Vous pouvez implémenter cette méthode en comptant les occurrences du film dans le panier des utilisateurs ou autre logique d'achat
+        // Exemple de logique :
+        int count = 0;
+        try {
+            Map<String, Set<String>> cart = CartManager.loadCart();
+            for (Set<String> filmIds : cart.values()) {
+                if (filmIds.contains(filmCode)) {
+                    count++;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    private int calculateNumberOfViews(String filmCode) {
+        Map<String, Integer> viewsMap = CSVManager.loadViews();
+        return viewsMap.getOrDefault(filmCode, 0);
+    }
+
+    private void addStatistic(JPanel panel, String label, String value) {
+        JPanel statPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel statLabel = new JLabel(label + ": ");
+        statLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        JLabel statValue = new JLabel(value);
+        statValue.setFont(new Font("Arial", Font.PLAIN, 14));
+        statPanel.add(statLabel);
+        statPanel.add(statValue);
+        panel.add(statPanel);
+    }
+
+
+    private int countPositiveComments(List<Comment> comments) {
+        int count = 0;
+        for (Comment comment : comments) {
+            try {
+                int rating = Integer.parseInt(comment.getRating());
+                if (rating >= 3) {
+                    count++;
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        return count;
+    }
+
+    private int countNegativeComments(List<Comment> comments) {
+        int count = 0;
+        for (Comment comment : comments) {
+            try {
+                int rating = Integer.parseInt(comment.getRating());
+                if (rating < 3) {
+                    count++;
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        return count;
+    }
+
+    private double calculateTotalRevenue(String filmCode, String priceStr) {
+        double price;
+        try {
+            price = Double.parseDouble(priceStr);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return 0.0;
+        }
+        int numberOfPurchases = calculateNumberOfPurchases(filmCode);
+        return price * numberOfPurchases;
+    }
+
+    private int calculateAddedToCartCount(String filmCode) {
+        int count = 0;
+        try {
+            Map<String, Set<String>> cart = CartManager.loadCart();
+            for (Set<String> filmIds : cart.values()) {
+                if (filmIds.contains(filmCode)) {
+                    count++;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    private double calculateAverageCommentLength(List<Comment> comments) {
+        int totalWords = 0;
+        for (Comment comment : comments) {
+            totalWords += comment.getText().split("\\s+").length;
+        }
+        return comments.isEmpty() ? 0.0 : (double) totalWords / comments.size();
+    }
+
+    private double calculatePositiveCommentPercentage(int positiveComments, int totalComments) {
+        return totalComments == 0 ? 0.0 : (double) positiveComments / totalComments * 100;
+    }
+
+
 }

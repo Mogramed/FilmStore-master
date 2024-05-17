@@ -10,6 +10,8 @@ public class CSVManager {
     private static final String USER_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/users.csv";
     private static final String SUBSCRIPTION_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/subscriptions.csv";
     private static final String FILM_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/films.csv";
+    private static final String VIEWS_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/views.csv";
+
 
 
 
@@ -596,6 +598,41 @@ public class CSVManager {
         try (PrintWriter writer = new PrintWriter(new FileWriter(SUBSCRIPTION_CSV_FILE_PATH, false))) {
             for (String line : lines) {
                 writer.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static Map<String, Integer> loadViews() {
+        Map<String, Integer> viewsMap = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(VIEWS_CSV_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    String filmCode = parts[0].trim();
+                    int views = Integer.parseInt(parts[1].trim());
+                    viewsMap.put(filmCode, views);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return viewsMap;
+    }
+
+    public static void updateViews(String filmCode) {
+        Map<String, Integer> viewsMap = loadViews();
+        viewsMap.put(filmCode, viewsMap.getOrDefault(filmCode, 0) + 1);
+        saveViews(viewsMap);
+    }
+
+    private static void saveViews(Map<String, Integer> viewsMap) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(VIEWS_CSV_FILE_PATH))) {
+            for (Map.Entry<String, Integer> entry : viewsMap.entrySet()) {
+                writer.println(entry.getKey() + "," + entry.getValue());
             }
         } catch (IOException e) {
             e.printStackTrace();

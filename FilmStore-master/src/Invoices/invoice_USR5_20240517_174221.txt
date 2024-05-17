@@ -1,0 +1,10 @@
+Invoice
+User : user testeur
+Date: 2024-05-17 17:42:21
+
+Purchased Films:
+- Interstellar - $10.00
+- Dune 2 - $12.00
+- Le Seigneur des Anneaux: La Communauté de l'Anneau - $9.00
+
+Total: $31.00

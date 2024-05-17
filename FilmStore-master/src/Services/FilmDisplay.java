@@ -198,7 +198,6 @@ public class FilmDisplay {
     }
 
     private String getPriceWithDiscount(String originalPrice) {
-        System.out.println("Attempting to parse price in FilmDisplay: " + originalPrice); // Ajoutez cette ligne
         double price = Double.parseDouble(originalPrice);
         if (SessionContext.isSubscribed()) {
             price -= 2;
@@ -351,6 +350,7 @@ public class FilmDisplay {
     }
 
     private void showFilmDetails(Film film) {
+        CSVManager.updateViews(film.getCode());  // Increment the view count
         JDialog detailsDialog = new JDialog(frame, "Film Details", true);
         detailsDialog.setLayout(new BorderLayout());
 
@@ -395,7 +395,7 @@ public class FilmDisplay {
         filmPanel.repaint();
     }
 
-    private double calculateAverageRating(List<Comment> comments) {
+    protected double calculateAverageRating(List<Comment> comments) {
         if (comments.isEmpty()) {
             return 0.0; // No ratings available
         }
