@@ -7,16 +7,16 @@ import Manager.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.Map;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class AccountManagementDialog extends JDialog {
     private User user;
     private JLabel passwordField;
     private JButton showPasswordButton;
+    private JTextArea purchaseHistoryArea;
     private JComboBox<String> purchaseHistoryComboBox;
 
     public AccountManagementDialog(Frame owner, User user) {
@@ -49,8 +49,7 @@ public class AccountManagementDialog extends JDialog {
         // Historique des achats
         purchaseHistoryComboBox = new JComboBox<>();
         loadPurchaseHistory();
-        infoPanel.add(new JLabel("Purchase History:"));
-        infoPanel.add(purchaseHistoryComboBox);
+        addField(infoPanel, "Purchase History:", purchaseHistoryComboBox);
 
         JButton modifyButton = new JButton("Modify");
         modifyButton.addActionListener(e -> openModifyForm());
@@ -73,6 +72,8 @@ public class AccountManagementDialog extends JDialog {
             subscribeButton.setText(!currentSubscriptionStatus ? "Se Désabonner" : "S'abonner");
         });
         infoPanel.add(subscribeButton);
+
+        add(infoPanel, BorderLayout.NORTH);
 
         // Load comments associated with the user
         List<Comment> comments = CSVManager.getUserComments(user.getId());
@@ -98,7 +99,6 @@ public class AccountManagementDialog extends JDialog {
             commentCard.add(buttonsPanel, BorderLayout.SOUTH);
             commentPanel.add(commentCard);
         }
-
         pack();
         setLocationRelativeTo(owner);
     }
@@ -111,17 +111,6 @@ public class AccountManagementDialog extends JDialog {
         fieldPanel.add(field, BorderLayout.CENTER);
         panel.add(fieldPanel);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
-    }
-
-    private void loadPurchaseHistory() {
-        List<String> purchaseHistory = user.getHistoriqueAchats();
-        Map<String, String> filmIdToNameMap = CSVManager.loadFilmIdToNameMap();
-
-        purchaseHistoryComboBox.removeAllItems();
-        for (String filmId : purchaseHistory) {
-            String filmName = filmIdToNameMap.getOrDefault(filmId, "Unknown Film");
-            purchaseHistoryComboBox.addItem(filmName);
-        }
     }
 
     private void openModifyForm() {
@@ -182,6 +171,19 @@ public class AccountManagementDialog extends JDialog {
         modifyDialog.pack();
         modifyDialog.setLocationRelativeTo(this);
         modifyDialog.setVisible(true);
+    }
+
+    private void loadPurchaseHistory() {
+        Map<String, String> filmIdToNameMap = CSVManager.loadFilmIdToNameMap();
+        List<String> purchaseHistory = CSVManager.loadPurchaseHistory(SessionContext.getCurrentUser().getId());
+        for (String filmId : purchaseHistory) {
+            String filmName = filmIdToNameMap.get(filmId);
+            if (filmName != null) {
+                purchaseHistoryComboBox.addItem(filmName);
+            } else {
+                purchaseHistoryComboBox.addItem("Unknown Film ID: " + filmId);
+            }
+        }
     }
 
     private void editComment(Comment comment) {

@@ -680,16 +680,31 @@ public class CSVManager {
         }
     }
 
+    public static List<String> loadPurchaseHistory(String userId) {
+        List<String> purchaseHistory = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(PURCHASE_HISTORY_CSV_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts.length > 1 && parts[0].equals(userId)) {
+                    String[] filmIds = parts[1].split(",");
+                    purchaseHistory.addAll(Arrays.asList(filmIds));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return purchaseHistory;
+    }
+
     public static Map<String, String> loadFilmIdToNameMap() {
         Map<String, String> filmIdToNameMap = new HashMap<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader("./FilmStore-master/src/CSVBase/Films.csv"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILM_CSV_FILE_PATH))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
                 if (parts.length > 0) {
-                    String filmId = parts[0];
-                    String filmName = parts[1];
-                    filmIdToNameMap.put(filmId, filmName);
+                    filmIdToNameMap.put(parts[0], parts[1]); // Assuming film ID is in parts[0] and title is in parts[1]
                 }
             }
         } catch (IOException e) {
