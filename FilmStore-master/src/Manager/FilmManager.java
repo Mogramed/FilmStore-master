@@ -125,4 +125,10 @@ public class FilmManager {
         return false;
     }
 
+    public boolean deleteFilm(String filmCode) {
+        return CSVManager.deleteFilmFromAllBases(filmCode);
+    }
+
+
+
 }

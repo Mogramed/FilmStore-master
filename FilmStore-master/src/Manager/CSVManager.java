@@ -12,6 +12,9 @@ public class CSVManager {
     private static final String FILM_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/films.csv";
     private static final String VIEWS_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/views.csv";
     private static final String PURCHASE_HISTORY_CSV_PATH = "./FilmStore-master/src/CSVBase/purchaseHistory.csv";
+    private static final String CARTS_CSV_PATH = "./FilmStore-master/src/CSVBase/carts.csv";
+    private static final String COMMENTS_STATE_CSV_PATH = "./FilmStore-master/src/CSVBase/commentsEnabledState.csv";
+
 
 
 
@@ -711,5 +714,108 @@ public class CSVManager {
             e.printStackTrace();
         }
         return filmIdToNameMap;
+    }
+
+
+
+    public static boolean deleteFilmFromAllBases(String filmCode) {
+        boolean filmRemoved = removeFilmFromCSV(filmCode);
+        boolean commentsRemoved = removeCommentsForFilm(filmCode);
+        boolean viewsRemoved = removeViewsForFilm(filmCode);
+        boolean cartItemsRemoved = removeFilmFromCarts(filmCode);
+        boolean commentstatus = removeCommentStatesForFilm(filmCode);
+
+        return filmRemoved && commentsRemoved && viewsRemoved && cartItemsRemoved && commentstatus ;
+    }
+
+    private static boolean removeFilmFromCSV(String filmCode) {
+        return updateCSV(FILM_CSV_FILE_PATH, line -> {
+            String[] parts = line.split(";");
+            return !parts[0].equals(filmCode) ? line : null;
+        });
+    }
+
+    private static boolean removeCommentsForFilm(String filmCode) {
+        boolean userCommentsRemoved = updateCSV(USER_CSV_FILE_PATH, line -> {
+            String[] parts = line.split(";");
+            if (parts.length > 8) {
+                parts[8] = Arrays.stream(parts[8].split("\\|"))
+                        .filter(comment -> !comment.contains(filmCode))
+                        .collect(Collectors.joining("|"));
+                return String.join(";", parts);
+            }
+            return line;
+        });
+
+        boolean filmCommentsRemoved = updateCSV(FILM_CSV_FILE_PATH, line -> {
+            String[] parts = line.split(";");
+            if (parts.length > 12) {
+                parts[12] = Arrays.stream(parts[12].split("\\|"))
+                        .filter(comment -> !comment.contains(filmCode))
+                        .collect(Collectors.joining("|"));
+                return String.join(";", parts);
+            }
+            return line;
+        });
+
+        return userCommentsRemoved && filmCommentsRemoved;
+    }
+
+    private static boolean removeViewsForFilm(String filmCode) {
+        return updateCSV(VIEWS_CSV_FILE_PATH, line -> {
+            String[] parts = line.split(",");
+            return !parts[0].equals(filmCode) ? line : null;
+        });
+    }
+
+    private static boolean removeFilmFromCarts(String filmCode) {
+        return updateCSV(CARTS_CSV_PATH, line -> {
+            String[] parts = line.split(";");
+            if (parts.length > 1) {
+                parts[1] = Arrays.stream(parts[1].split("\\|"))
+                        .filter(cartItem -> !cartItem.equals(filmCode))
+                        .collect(Collectors.joining("|"));
+                return parts[1].isEmpty() ? null : String.join(";", parts);  // Suppression de la ligne si elle devient vide
+            }
+            return line;
+        });
+    }
+
+    private static boolean updateCSV(String filePath, LineProcessor processor) {
+        File inputFile = new File(filePath);
+        File tempFile = new File(inputFile.getAbsolutePath() + ".tmp");
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String updatedLine = processor.processLine(line);
+                if (updatedLine != null) {
+                    writer.write(updatedLine);
+                    writer.newLine();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        if (!inputFile.delete() || !tempFile.renameTo(inputFile)) {
+            return false;
+        }
+
+        return true;
+    }
+    private static boolean removeCommentStatesForFilm(String filmCode) {
+        return updateCSV(COMMENTS_STATE_CSV_PATH, line -> {
+            String[] parts = line.split(",");
+            return !parts[0].equals(filmCode) ? line : null;  // Suppression si le filmCode est trouvé dans la première colonne
+        });
+    }
+
+    @FunctionalInterface
+    private interface LineProcessor {
+        String processLine(String line);
     }
 }

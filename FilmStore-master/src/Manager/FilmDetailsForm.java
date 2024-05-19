@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Vector;
 
 
+
+
 public class FilmDetailsForm {
     private Film film;
     private JTextField titleField = new JTextField(20);
@@ -134,16 +136,19 @@ public class FilmDetailsForm {
     }
 
     private void deleteFilm() {
-        int response = JOptionPane.showConfirmDialog(null, "Confirm delete for film: " + film.getTitle() + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        int response = JOptionPane.showConfirmDialog(getFormPanel(), "Are you sure you want to delete this film?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
-            boolean success = CSVManager.deleteFilmFromCSV(film.getCode());
+            // Supprimer le film de toutes les bases
+            boolean success = CSVManager.deleteFilmFromAllBases(film.getCode());
             if (success) {
-                JOptionPane.showMessageDialog(null, "Film deleted successfully!");
+                JOptionPane.showMessageDialog(getFormPanel(), "Film deleted successfully.");
+
             } else {
-                JOptionPane.showMessageDialog(null, "Failed to delete film.");
+                JOptionPane.showMessageDialog(getFormPanel(), "Failed to delete film.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
+
 
 
 
