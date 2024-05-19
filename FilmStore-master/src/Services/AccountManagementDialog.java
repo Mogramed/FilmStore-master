@@ -7,13 +7,17 @@ import Manager.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.Map;
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
+import java.util.stream.Collectors;
 
 public class AccountManagementDialog extends JDialog {
     private User user;
     private JLabel passwordField;
     private JButton showPasswordButton;
+    private JComboBox<String> purchaseHistoryComboBox;
 
     public AccountManagementDialog(Frame owner, User user) {
         super(owner, "Account Management", true);
@@ -30,7 +34,6 @@ public class AccountManagementDialog extends JDialog {
         addField(infoPanel, "Address:", new JLabel(user.getAddress()));
         addField(infoPanel, "Phone number:", new JLabel(String.valueOf(user.getPhonenumber())));
 
-
         passwordField = new JLabel(user.getPassword());
         passwordField.setText("********");
         addField(infoPanel, "Password:", passwordField);
@@ -42,6 +45,16 @@ public class AccountManagementDialog extends JDialog {
             }
         });
         infoPanel.add(showPasswordButton);
+
+        // Historique des achats
+        purchaseHistoryComboBox = new JComboBox<>();
+        loadPurchaseHistory();
+        infoPanel.add(new JLabel("Purchase History:"));
+        infoPanel.add(purchaseHistoryComboBox);
+
+        JButton modifyButton = new JButton("Modify");
+        modifyButton.addActionListener(e -> openModifyForm());
+        infoPanel.add(modifyButton);
 
         add(infoPanel, BorderLayout.NORTH);
 
@@ -60,8 +73,6 @@ public class AccountManagementDialog extends JDialog {
             subscribeButton.setText(!currentSubscriptionStatus ? "Se Désabonner" : "S'abonner");
         });
         infoPanel.add(subscribeButton);
-
-        add(infoPanel, BorderLayout.NORTH);
 
         // Load comments associated with the user
         List<Comment> comments = CSVManager.getUserComments(user.getId());
@@ -87,6 +98,7 @@ public class AccountManagementDialog extends JDialog {
             commentCard.add(buttonsPanel, BorderLayout.SOUTH);
             commentPanel.add(commentCard);
         }
+
         pack();
         setLocationRelativeTo(owner);
     }
@@ -99,6 +111,77 @@ public class AccountManagementDialog extends JDialog {
         fieldPanel.add(field, BorderLayout.CENTER);
         panel.add(fieldPanel);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
+    }
+
+    private void loadPurchaseHistory() {
+        List<String> purchaseHistory = user.getHistoriqueAchats();
+        Map<String, String> filmIdToNameMap = CSVManager.loadFilmIdToNameMap();
+
+        purchaseHistoryComboBox.removeAllItems();
+        for (String filmId : purchaseHistory) {
+            String filmName = filmIdToNameMap.getOrDefault(filmId, "Unknown Film");
+            purchaseHistoryComboBox.addItem(filmName);
+        }
+    }
+
+    private void openModifyForm() {
+        JDialog modifyDialog = new JDialog(this, "Modify Information", true);
+        modifyDialog.setLayout(new BorderLayout());
+
+        JPanel modifyPanel = new JPanel();
+        modifyPanel.setLayout(new BoxLayout(modifyPanel, BoxLayout.Y_AXIS));
+        modifyPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JTextField firstNameField = new JTextField(user.getFirstname());
+        JTextField lastNameField = new JTextField(user.getLastname());
+        JTextField emailField = new JTextField(user.getEmail());
+        JTextField addressField = new JTextField(user.getAddress());
+        JTextField phoneNumberField = new JTextField(String.valueOf(user.getPhonenumber()));
+        JPasswordField passwordFieldInput = new JPasswordField(user.getPassword());
+
+        addField(modifyPanel, "First Name:", firstNameField);
+        addField(modifyPanel, "Last Name:", lastNameField);
+        addField(modifyPanel, "Email:", emailField);
+        addField(modifyPanel, "Address:", addressField);
+        addField(modifyPanel, "Phone number:", phoneNumberField);
+        addField(modifyPanel, "Password:", passwordFieldInput);
+
+        JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(e -> {
+            String newFirstName = firstNameField.getText().trim();
+            String newLastName = lastNameField.getText().trim();
+            String newEmail = emailField.getText().trim();
+            String newAddress = addressField.getText().trim();
+            String newPhoneNumber = phoneNumberField.getText().trim();
+            String newPassword = new String(passwordFieldInput.getPassword()).trim();
+
+            if (newFirstName.isEmpty() || newLastName.isEmpty() || newEmail.isEmpty() || newAddress.isEmpty() || newPhoneNumber.isEmpty() || newPassword.isEmpty()) {
+                JOptionPane.showMessageDialog(modifyDialog, "All fields must be filled out.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Update user information in CSV
+            boolean success = CSVManager.updateUserInCSV(user.getId(), newFirstName, newLastName, newEmail, newAddress, newPhoneNumber, newPassword);
+            if (success) {
+                JOptionPane.showMessageDialog(modifyDialog, "User information updated successfully.");
+                // Update the user object with new information
+                user.setFirstname(newFirstName);
+                user.setLastname(newLastName);
+                user.setEmail(newEmail);
+                user.setAddress(newAddress);
+                user.setPhonenumber(Integer.parseInt(newPhoneNumber));
+                user.setPassword(newPassword);
+                modifyDialog.dispose();
+            } else {
+                JOptionPane.showMessageDialog(modifyDialog, "Failed to update user information.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        modifyPanel.add(saveButton);
+        modifyDialog.add(modifyPanel, BorderLayout.CENTER);
+        modifyDialog.pack();
+        modifyDialog.setLocationRelativeTo(this);
+        modifyDialog.setVisible(true);
     }
 
     private void editComment(Comment comment) {
@@ -130,13 +213,11 @@ public class AccountManagementDialog extends JDialog {
         }
     }
 
-
     private void deleteComment(Comment comment) {
         // Delete the comment
         int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this comment?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
             boolean success = CSVManager.removeCommentFromFilmAndUser(comment.getUsercode(), comment.getFilmcode(), comment.getRating(), comment.getText());
-            System.out.println(comment.getFilmcode()+" et " + comment.getUsercode()+ comment.getRating()+ comment.getText());
             if (success) {
                 JOptionPane.showMessageDialog(this, "Comment deleted.");
                 dispose(); // Close the dialog
@@ -145,7 +226,6 @@ public class AccountManagementDialog extends JDialog {
             }
         }
     }
-
 
     private void verifyPassword() {
         String enteredPassword = JOptionPane.showInputDialog(this, "Enter your password to confirm:");

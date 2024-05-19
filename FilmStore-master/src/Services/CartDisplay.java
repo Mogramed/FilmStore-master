@@ -1,6 +1,7 @@
 package Services;
 
 import Entities.Film;
+import Entities.User;
 import Manager.*;
 
 import javax.swing.*;
@@ -149,17 +150,20 @@ public class CartDisplay extends JFrame {
     }
 
     private void buyAll(double totalPrice) {
-        generateInvoice(totalPrice);
-        JOptionPane.showMessageDialog(this, "Purchase successful! An invoice has been generated.");
         try {
-            CartManager.clearCart(SessionContext.getCurrentUserId());
-            this.dispose();
+            User currentUser = SessionContext.getCurrentUser();
+            for (String filmId : filmIds) {
+                currentUser.addPurchase(filmId);
+            }
+            CSVManager.savePurchaseHistory(currentUser);
+            generateInvoice(totalPrice);
+            JOptionPane.showMessageDialog(this, "Purchase completed successfully!");
+            clearCart(); // Clear the cart after purchase
         } catch (IOException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Failed to clear cart.");
+            JOptionPane.showMessageDialog(this, "Failed to complete purchase.");
         }
     }
-
     private void generateInvoice(double totalPrice) {
         String userId = SessionContext.getCurrentUserId();
         String userName = CSVManager.getUserNameFromUserId(userId);

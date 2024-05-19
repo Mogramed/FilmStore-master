@@ -1,11 +1,9 @@
 package Entities;
 
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
+
 
 public class User {
     private String id;
@@ -16,7 +14,7 @@ public class User {
     private String address;
     private String passphrase;
     private int phonenumber;
-    private List<Film> historiqueAchats;
+    private List<String> historiqueAchats;
     private List<String> comments;
     private boolean isAdmin;
 
@@ -100,9 +98,11 @@ public class User {
         this.passphrase = passphrase;
     }
 
-    public List<Film> getHistoriqueAchats() {return historiqueAchats;}
+    public List<String> getHistoriqueAchats() {return historiqueAchats;}
 
-    public void setHistoriqueAchats(List<Film> historiqueAchats) {this.historiqueAchats = historiqueAchats;}
+    public void addPurchase(String filmId) {
+        this.historiqueAchats.add(filmId);
+    }
 
     public void setAddress(String address) {
         this.address = address;

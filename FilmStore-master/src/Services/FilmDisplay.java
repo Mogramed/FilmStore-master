@@ -35,6 +35,7 @@ public class FilmDisplay {
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
 
+
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         ImageIcon refreshIcon = new ImageIcon(new ImageIcon("./FilmStore-master/src/util/refresh.png").getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH));
         JButton refreshButton = new JButton(refreshIcon);
@@ -92,7 +93,7 @@ public class FilmDisplay {
         SessionContext.setCurrentUser(null);
         SessionContext.setGuestUser(true);
         // Réinitialiser l'interface utilisateur
-        new LoginWindow(filmManager);
+        //new LoginWindow(filmManager);
         frame.dispose();
     }
 

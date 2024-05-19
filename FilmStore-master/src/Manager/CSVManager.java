@@ -11,6 +11,8 @@ public class CSVManager {
     private static final String SUBSCRIPTION_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/subscriptions.csv";
     private static final String FILM_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/films.csv";
     private static final String VIEWS_CSV_FILE_PATH = "./FilmStore-master/src/CSVBase/views.csv";
+    private static final String PURCHASE_HISTORY_CSV_PATH = "./FilmStore-master/src/CSVBase/purchaseHistory.csv";
+
 
 
 
@@ -637,5 +639,62 @@ public class CSVManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static boolean updateUserInCSV(String userId, String newFirstName, String newLastName, String newEmail, String newAddress, String newPhoneNumber, String newPassword) {
+        File inputFile = new File("./FilmStore-master/src/CSVBase/users.csv");
+        File tempFile = new File("./FilmStore-master/src/CSVBase/users_temp.csv");
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+             PrintWriter writer = new PrintWriter(new FileWriter(tempFile))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts[0].equals(userId)) {
+                    // Write updated user information
+                    writer.println(userId + ";" + newFirstName + ";" + newLastName + ";" + newEmail + ";" + newPassword + ";" + newAddress + ";" + parts[6] + ";" + newPhoneNumber + ";" + parts[8]);
+                } else {
+                    // Write existing user information
+                    writer.println(line);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        // Replace the original file with the updated file
+        if (!inputFile.delete() || !tempFile.renameTo(inputFile)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static void savePurchaseHistory(User user) throws IOException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(PURCHASE_HISTORY_CSV_PATH, true))) {
+            for (String filmId : user.getHistoriqueAchats()) {
+                writer.println(user.getId() + ";" + filmId);
+            }
+        }
+    }
+
+    public static Map<String, String> loadFilmIdToNameMap() {
+        Map<String, String> filmIdToNameMap = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader("./FilmStore-master/src/CSVBase/Films.csv"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts.length > 0) {
+                    String filmId = parts[0];
+                    String filmName = parts[1];
+                    filmIdToNameMap.put(filmId, filmName);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return filmIdToNameMap;
     }
 }
